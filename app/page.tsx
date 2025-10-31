@@ -63,10 +63,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 md:pr-[88px]">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
+        <div className="text-center mb-8 animate-fade-in pt-12 md:pt-0">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2">داشبورد پس‌انداز بیت‌کوین</h1>
           <p className="text-muted-foreground">پرتفوی خود را مدیریت و رشد سرمایه‌گذاری خود را دنبال کنید</p>
         </div>
