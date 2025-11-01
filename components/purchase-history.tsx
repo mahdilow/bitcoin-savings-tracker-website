@@ -1,7 +1,19 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { Purchase } from "@/lib/types"
 import { formatCurrency, formatBTC } from "@/lib/utils"
 import { isoToJalali } from "@/lib/jalali-utils"
@@ -16,6 +28,7 @@ interface PurchaseHistoryProps {
 }
 
 export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: PurchaseHistoryProps) {
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const displayPurchases = purchases.slice(0, 5)
 
   if (purchases.length === 0) {
@@ -32,6 +45,13 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
         </div>
       </Card>
     )
+  }
+
+  const handleDeleteConfirm = () => {
+    if (deleteId) {
+      onDelete(deleteId)
+      setDeleteId(null)
+    }
   }
 
   return (
@@ -88,18 +108,32 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    if (confirm("آیا مطمئن هستید که می‌خواهید این خرید را حذف کنید؟")) {
-                      onDelete(purchase.id)
-                    }
-                  }}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDeleteId(purchase.id)}
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>تایید حذف</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        آیا از حذف این رکورد خرید اطمینان دارید؟ این عمل غیرقابل بازگشت است.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setDeleteId(null)}>انصراف</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        حذف
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </Card>
