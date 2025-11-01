@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { JalaliDateInput } from "@/components/jalali-date-input"
 import type { Purchase } from "@/lib/types"
 
 interface AddPurchaseDialogProps {
@@ -31,12 +32,12 @@ export function AddPurchaseDialog({
   useEffect(() => {
     if (open) {
       if (editingPurchase) {
-        setDate(editingPurchase.date.split("T")[0])
+        setDate(editingPurchase.date)
         setBtcAmount(editingPurchase.btcAmount.toString())
         setUsdPrice(editingPurchase.usdPriceAtPurchase.toString())
         setNotes(editingPurchase.notes || "")
       } else {
-        setDate(new Date().toISOString().split("T")[0])
+        setDate(new Date().toISOString())
         setBtcAmount("")
         setUsdPrice(currentBTCPrice.toString())
         setNotes("")
@@ -89,15 +90,9 @@ export function AddPurchaseDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="date" className="text-foreground">
-              تاریخ خرید
+              تاریخ خرید (شمسی)
             </Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-background border-border text-foreground"
-            />
+            <JalaliDateInput value={date} onChange={setDate} className="bg-background border-border text-foreground" />
             {errors.date && <p className="text-sm text-destructive">{errors.date}</p>}
           </div>
 

@@ -55,6 +55,13 @@ export default function DashboardPage() {
     setPurchases((prev) => prev.filter((p) => p.id !== id))
   }
 
+  const handleImportPurchases = (importedPurchases: Purchase[]) => {
+    setPurchases((prev) => {
+      const combined = [...prev, ...importedPurchases]
+      return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    })
+  }
+
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open)
     if (!open) {
@@ -84,7 +91,12 @@ export default function DashboardPage() {
         <PortfolioChart purchases={purchases} currentBTCPrice={currentBTCPrice} />
 
         {/* Purchase History */}
-        <PurchaseHistory purchases={purchases} onEdit={handleEditPurchase} onDelete={handleDeletePurchase} />
+        <PurchaseHistory
+          purchases={purchases}
+          onEdit={handleEditPurchase}
+          onDelete={handleDeletePurchase}
+          onImport={handleImportPurchases}
+        />
 
         {/* Floating Add Button */}
         <Button

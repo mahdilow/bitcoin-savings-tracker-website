@@ -3,16 +3,19 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Purchase } from "@/lib/types"
-import { formatCurrency, formatBTC, formatPersianDate } from "@/lib/utils"
+import { formatCurrency, formatBTC } from "@/lib/utils"
+import { isoToJalali } from "@/lib/jalali-utils"
 import { Edit, Trash2, ShoppingCart } from "lucide-react"
+import { ImportExportButtons } from "@/components/import-export-buttons"
 
 interface PurchaseHistoryProps {
   purchases: Purchase[]
   onEdit: (purchase: Purchase) => void
   onDelete: (id: string) => void
+  onImport: (purchases: Purchase[]) => void
 }
 
-export function PurchaseHistory({ purchases, onEdit, onDelete }: PurchaseHistoryProps) {
+export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: PurchaseHistoryProps) {
   const displayPurchases = purchases.slice(0, 5)
 
   if (purchases.length === 0) {
@@ -33,13 +36,16 @@ export function PurchaseHistory({ purchases, onEdit, onDelete }: PurchaseHistory
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-bold text-foreground">تاریخچه خریدها</h2>
-        {purchases.length > 5 && (
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 bg-transparent">
-            مشاهده همه ({purchases.length})
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <ImportExportButtons purchases={purchases} onImport={onImport} />
+          {purchases.length > 5 && (
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 bg-transparent">
+              مشاهده همه ({purchases.length})
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -52,7 +58,7 @@ export function PurchaseHistory({ purchases, onEdit, onDelete }: PurchaseHistory
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <p className="text-sm text-muted-foreground">{formatPersianDate(purchase.date)}</p>
+                  <p className="text-sm text-muted-foreground">{isoToJalali(purchase.date)}</p>
                   {purchase.notes && (
                     <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">{purchase.notes}</span>
                   )}

@@ -2,7 +2,8 @@
 
 import { Card } from "@/components/ui/card"
 import type { Purchase } from "@/lib/types"
-import { formatCurrency, formatPersianDate } from "@/lib/utils"
+import { formatCurrency } from "@/lib/utils"
+import { isoToJalali } from "@/lib/jalali-utils"
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts"
 
 interface PortfolioChartProps {
@@ -22,7 +23,7 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
     const valueAtPurchase = totalBTC * purchase.usdPriceAtPurchase
 
     return {
-      date: formatPersianDate(purchase.date),
+      date: isoToJalali(purchase.date),
       value: valueAtPurchase,
       invested: totalInvested,
       fullDate: purchase.date,

@@ -52,12 +52,3 @@ export function getDailyQuote(quotes: Quote[]): Quote {
   const index = dayOfYear % quotes.length
   return quotes[index]
 }
-
-export function formatPersianDate(dateString: string): string {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date)
-}
