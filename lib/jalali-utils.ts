@@ -1,50 +1,49 @@
 // Jalali to Gregorian conversion
-export function jalaliToGregorian(jy: number, jm: number, jd: number): { gy: number; gm: number; gd: number } {
-  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
-  const jy2 = jm > 6 ? jy + 1 : jy
-  let days =
+export function jalaliToGregorian(
+  jy: number,
+  jm: number,
+  jd: number,
+): { gy: number; gm: number; gd: number } {
+  let sal_a, gy, gm, gd, days
+  jy += 1595
+  days =
+    -355668 +
     365 * jy +
-    Math.floor((jy2 + 3) / 4) -
-    Math.floor((jy2 + 99) / 100) +
-    Math.floor((jy2 + 399) / 400) -
-    80 +
+    Math.floor(jy / 33) * 8 +
+    Math.floor(((jy % 33) + 3) / 4) +
     jd +
-    [0, 31, 62, 93, 124, 155, 186, 216, 246, 276, 306, 336][jm - 1]
-
-  let gy = 400 * Math.floor(days / 146097)
+    (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186)
+  gy = 400 * Math.floor(days / 146097)
   days %= 146097
-
-  let flag = true
-  if (days >= 36525) {
-    days--
-    gy += 100 * Math.floor(days / 36524)
+  if (days > 36524) {
+    gy += 100 * Math.floor(--days / 36524)
     days %= 36524
     if (days >= 365) days++
-    else flag = false
   }
-
   gy += 4 * Math.floor(days / 1461)
   days %= 1461
-
-  if (flag) {
-    if (days >= 366) {
-      days--
-      gy += Math.floor(days / 365)
-      days %= 365
-    }
+  if (days > 365) {
+    gy += Math.floor((days - 1) / 365)
+    days = (days - 1) % 365
   }
-
-  const gd = days + 1
-  const sal_a = [0, 31, flag && gy % 4 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-  let gm = 0
-  for (let v = 0; v < 13; v++) {
-    if (gd <= sal_a[v]) {
-      gm = v
-      break
-    }
-  }
-
-  return { gy, gm, gd: gd - sal_a[gm - 1] }
+  gd = days + 1
+  sal_a = [
+    0,
+    31,
+    (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0 ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ]
+  for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) gd -= sal_a[gm]
+  return { gy, gm, gd }
 }
 
 // Gregorian to Jalali conversion
@@ -108,7 +107,13 @@ export function isoToJalali(isoDate: string): string {
 
 // Convert Jalali date to ISO string
 export function jalaliToIso(jy: number, jm: number, jd: number): string {
+  if (Number.isNaN(jy) || Number.isNaN(jm) || Number.isNaN(jd) || jy === 0 || jm === 0 || jd === 0) {
+    return ""
+  }
   const { gy, gm, gd } = jalaliToGregorian(jy, jm, jd)
+  if (Number.isNaN(gy) || Number.isNaN(gm) || Number.isNaN(gd)) {
+    return ""
+  }
   return new Date(gy, gm - 1, gd).toISOString()
 }
 
