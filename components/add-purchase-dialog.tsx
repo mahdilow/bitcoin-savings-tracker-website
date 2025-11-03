@@ -29,8 +29,16 @@ export function AddPurchaseDialog({
   const [notes, setNotes] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const [isInitialOpening, setIsInitialOpening] = useState(false)
+
   useEffect(() => {
     if (open) {
+      setIsInitialOpening(true)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (open && isInitialOpening) {
       if (editingPurchase) {
         setDate(editingPurchase.date)
         setBtcAmount(editingPurchase.btcAmount.toString())
@@ -43,8 +51,9 @@ export function AddPurchaseDialog({
         setNotes("")
       }
       setErrors({})
+      setIsInitialOpening(false)
     }
-  }, [open, currentBTCPrice, editingPurchase])
+  }, [open, currentBTCPrice, editingPurchase, isInitialOpening])
 
   const calculateTotal = () => {
     const btc = Number.parseFloat(btcAmount) || 0

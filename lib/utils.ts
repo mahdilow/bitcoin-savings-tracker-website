@@ -11,7 +11,12 @@ export function calculateMetrics(
   currentBTCPrice: number,
   currentBTCPriceIRT: number,
 ): Metrics {
-  const totalBTC = purchases.reduce((sum, p) => sum + p.btcAmount, 0)
+  let totalBTC = 0
+  for (const p of purchases) {
+    totalBTC += p.btcAmount
+  }
+  totalBTC = Number.parseFloat(totalBTC.toFixed(8))
+
   const totalInvested = purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0)
   const currentValue = totalBTC * currentBTCPrice
   const currentValueIRT = totalBTC * currentBTCPriceIRT

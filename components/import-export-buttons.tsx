@@ -110,6 +110,7 @@ export function ImportExportButtons({ purchases, onImport }: ImportExportButtons
         variant="outline"
         size="sm"
         onClick={handleExportCSV}
+        disabled={purchases.length === 0}
         className="border-border text-foreground hover:bg-muted bg-transparent"
       >
         <Download className="w-4 h-4 ml-2" />
@@ -119,6 +120,7 @@ export function ImportExportButtons({ purchases, onImport }: ImportExportButtons
         variant="outline"
         size="sm"
         onClick={handleExportJSON}
+        disabled={purchases.length === 0}
         className="border-border text-foreground hover:bg-muted bg-transparent"
       >
         <Download className="w-4 h-4 ml-2" />

@@ -18,9 +18,15 @@ export function JalaliDateInput({ value, onChange, className }: JalaliDateInputP
 
   useEffect(() => {
     if (value) {
-      const date = new Date(value)
-      const { jy, jm, jd } = gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate())
-      setJalaliValue(formatJalaliInput(jy, jm, jd))
+      try {
+        const date = new Date(value)
+        if (!Number.isNaN(date.getTime())) {
+          const { jy, jm, jd } = gregorianToJalali(date.getFullYear(), date.getMonth() + 1, date.getDate())
+          setJalaliValue(formatJalaliInput(jy, jm, jd))
+        }
+      } catch (error) {
+        // handle invalid date value
+      }
     }
   }, [value])
 
@@ -28,8 +34,10 @@ export function JalaliDateInput({ value, onChange, className }: JalaliDateInputP
     const input = e.target.value
     setJalaliValue(input)
     setErrorMessage("")
+  }
 
-    const parsed = parseJalaliInput(input)
+  const handleBlur = () => {
+    const parsed = parseJalaliInput(jalaliValue)
     if (parsed) {
       const isoDate = jalaliToIso(parsed.jy, parsed.jm, parsed.jd)
       const selectedDate = new Date(isoDate)
@@ -45,6 +53,10 @@ export function JalaliDateInput({ value, onChange, className }: JalaliDateInputP
       }
 
       onChange(isoDate)
+    } else if (jalaliValue) {
+      // if input is not empty and not valid
+      setErrorMessage("فرمت تاریخ نامعتبر است.")
+      onChange("")
     }
   }
 
@@ -54,6 +66,7 @@ export function JalaliDateInput({ value, onChange, className }: JalaliDateInputP
         type="text"
         value={jalaliValue}
         onChange={handleChange}
+        onBlur={handleBlur}
         placeholder="1403/09/15"
         className={className}
         dir="ltr"
