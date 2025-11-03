@@ -29,7 +29,6 @@ interface PurchaseHistoryProps {
 
 export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: PurchaseHistoryProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const displayPurchases = purchases.slice(0, 5)
 
   const handleDeleteConfirm = () => {
     if (deleteId) {
@@ -42,14 +41,7 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-bold text-foreground">تاریخچه خریدها</h2>
-        <div className="flex items-center gap-2 flex-wrap">
-          <ImportExportButtons purchases={purchases} onImport={onImport} />
-          {purchases.length > 5 && (
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 bg-transparent">
-              مشاهده همه ({purchases.length})
-            </Button>
-          )}
-        </div>
+        <ImportExportButtons purchases={purchases} onImport={onImport} />
       </div>
 
       {purchases.length === 0 ? (
@@ -65,8 +57,8 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
           </div>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {displayPurchases.map((purchase, index) => (
+        <div className="max-h-[500px] md:max-h-[600px] overflow-y-auto pr-3 space-y-3 custom-scrollbar rounded-lg">
+          {purchases.map((purchase, index) => (
             <Card
               key={purchase.id}
               className="p-4 border-border hover:border-primary/30 transition-all duration-200 animate-fade-in"
@@ -74,7 +66,7 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <p className="text-sm text-muted-foreground">{isoToJalali(purchase.date)}</p>
                     {purchase.notes && (
                       <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
