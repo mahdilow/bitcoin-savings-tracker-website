@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card"
 import type { Purchase } from "@/lib/types"
 import { formatCurrency } from "@/lib/utils"
 import { isoToJalali } from "@/lib/jalali-utils"
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts"
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Legend } from "recharts"
 
 interface PortfolioChartProps {
   purchases: Purchase[]
@@ -56,6 +56,10 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
               <stop offset="5%" stopColor="rgb(247, 147, 26)" stopOpacity={0.3} />
               <stop offset="95%" stopColor="rgb(247, 147, 26)" stopOpacity={0} />
             </linearGradient>
+            <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="rgb(59, 130, 246)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="rgb(59, 130, 246)" stopOpacity={0} />
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgb(42, 42, 42)" />
           <XAxis dataKey="date" stroke="rgb(163, 163, 163)" style={{ fontSize: "12px" }} />
@@ -72,7 +76,64 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
               direction: "rtl",
             }}
             labelStyle={{ color: "rgb(255, 255, 255)" }}
-            formatter={(value: number) => [formatCurrency(value), "ارزش"]}
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                const value = payload.find((p) => p.dataKey === "value")?.value as number
+                const invested = payload.find((p) => p.dataKey === "invested")?.value as number
+                const profitLoss = value - invested
+                const profitLossPercent = ((profitLoss / invested) * 100).toFixed(2)
+                const isProfit = profitLoss >= 0
+
+                return (
+                  <div
+                    style={{
+                      backgroundColor: "rgb(26, 26, 26)",
+                      border: "1px solid rgb(42, 42, 42)",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      direction: "rtl",
+                    }}
+                  >
+                    <p style={{ color: "rgb(255, 255, 255)", marginBottom: "8px", fontWeight: "bold" }}>{label}</p>
+                    <p style={{ color: "rgb(247, 147, 26)", marginBottom: "4px" }}>
+                      ارزش فعلی: {formatCurrency(value)}
+                    </p>
+                    <p style={{ color: "rgb(59, 130, 246)", marginBottom: "8px" }}>
+                      سرمایه: {formatCurrency(invested)}
+                    </p>
+                    <div
+                      style={{
+                        borderTop: "1px solid rgb(42, 42, 42)",
+                        paddingTop: "8px",
+                        marginTop: "4px",
+                      }}
+                    >
+                      <p
+                        style={{
+                          color: isProfit ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {isProfit ? "سود" : "ضرر"}: {formatCurrency(Math.abs(profitLoss))} ({profitLossPercent}%)
+                      </p>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            }}
+          />
+          <Legend
+            wrapperStyle={{ direction: "rtl", paddingTop: "20px" }}
+            formatter={(value) => (value === "value" ? "ارزش فعلی" : "سرمایه سرمایه‌گذاری شده")}
+          />
+          <Area
+            type="monotone"
+            dataKey="invested"
+            stroke="rgb(59, 130, 246)"
+            strokeWidth={2}
+            fill="url(#colorInvested)"
           />
           <Area type="monotone" dataKey="value" stroke="rgb(247, 147, 26)" strokeWidth={2} fill="url(#colorValue)" />
         </AreaChart>
