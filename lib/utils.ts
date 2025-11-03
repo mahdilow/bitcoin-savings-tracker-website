@@ -6,10 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function calculateMetrics(purchases: Purchase[], currentBTCPrice: number): Metrics {
+export function calculateMetrics(
+  purchases: Purchase[],
+  currentBTCPrice: number,
+  currentBTCPriceIRT: number,
+): Metrics {
   const totalBTC = purchases.reduce((sum, p) => sum + p.btcAmount, 0)
   const totalInvested = purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0)
   const currentValue = totalBTC * currentBTCPrice
+  const currentValueIRT = totalBTC * currentBTCPriceIRT
   const profitLoss = currentValue - totalInvested
   const profitLossPercent = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0
   const averageBuyPrice = totalBTC > 0 ? totalInvested / totalBTC : 0
@@ -18,19 +23,26 @@ export function calculateMetrics(purchases: Purchase[], currentBTCPrice: number)
     totalBTC,
     totalInvested,
     currentValue,
+    currentValueIRT,
     profitLoss,
     profitLossPercent,
     averageBuyPrice,
   }
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("fa-IR", {
+export function formatCurrency(amount: number, currency = "USD"): string {
+  const options: Intl.NumberFormatOptions = {
     style: "currency",
-    currency: "USD",
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  })
+  }
+
+  if (currency === "IRT") {
+    options.currencyDisplay = "name"
+  }
+
+  return new Intl.NumberFormat("fa-IR", options)
     .format(amount)
     .replace("US$", "$")
 }

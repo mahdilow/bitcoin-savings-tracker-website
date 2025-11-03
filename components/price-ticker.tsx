@@ -8,14 +8,17 @@ import type { BitcoinPrice } from "@/lib/types"
 
 interface PriceTickerProps {
   onPriceUpdate: (price: number) => void
+  currentBTCPriceIRT: number
 }
 
-export function PriceTicker({ onPriceUpdate }: PriceTickerProps) {
+export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerProps) {
   const [price, setPrice] = useState<BitcoinPrice | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isPulsing, setIsPulsing] = useState(false)
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
     const fetchPrice = async () => {
       try {
         const response = await fetch(
@@ -39,10 +42,31 @@ export function PriceTicker({ onPriceUpdate }: PriceTickerProps) {
       }
     }
 
-    fetchPrice()
-    const interval = setInterval(fetchPrice, 60000) // Refresh every 60 seconds
+    const startFetching = () => {
+      fetchPrice()
+      if (interval) clearInterval(interval)
+      interval = setInterval(fetchPrice, 60000)
+    }
 
-    return () => clearInterval(interval)
+    const stopFetching = () => {
+      if (interval) clearInterval(interval)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopFetching()
+      } else {
+        startFetching()
+      }
+    }
+
+    startFetching()
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      stopFetching()
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
   }, [onPriceUpdate])
 
   if (isLoading) {
@@ -80,6 +104,7 @@ export function PriceTicker({ onPriceUpdate }: PriceTickerProps) {
           <div>
             <p className="text-sm text-muted-foreground mb-1">قیمت فعلی بیت‌کوین</p>
             <p className="text-3xl font-bold text-foreground">{formatCurrency(price.usd)}</p>
+            {currentBTCPriceIRT > 0 && <p className="text-xl font-bold text-muted-foreground mt-1">{formatCurrency(currentBTCPriceIRT, "IRT")}</p>}
           </div>
         </div>
 

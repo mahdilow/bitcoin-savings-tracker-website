@@ -16,6 +16,7 @@ export interface Metrics {
   totalBTC: number
   totalInvested: number
   currentValue: number
+  currentValueIRT: number
   profitLoss: number
   profitLossPercent: number
   averageBuyPrice: number
@@ -23,5 +24,5 @@ export interface Metrics {
 
 export interface BitcoinPrice {
   usd: number
-  usd_24h_change: number
+  usd_2_h_change: number
 }

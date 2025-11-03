@@ -26,6 +26,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
     {
       title: "ارزش فعلی",
       value: formatCurrency(metrics.currentValue),
+      valueIRT: formatCurrency(metrics.currentValueIRT, "IRT"),
       subtitle: `${metrics.profitLoss >= 0 ? "+" : ""}${formatCurrency(metrics.profitLoss)} (${metrics.profitLossPercent >= 0 ? "+" : ""}${formatNumber(metrics.profitLossPercent.toFixed(2))}%)`,
       subtitleColor: metrics.profitLoss >= 0 ? "text-[rgb(var(--success))]" : "text-destructive",
       icon: TrendingUp,
@@ -52,6 +53,7 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
             <card.icon className={`w-5 h-5 ${card.color} group-hover:scale-110 transition-transform`} />
           </div>
           <p className="text-2xl font-bold text-foreground mb-1">{card.value}</p>
+          {card.valueIRT && <p className="text-lg font-bold text-muted-foreground mb-1">{card.valueIRT}</p>}
           {card.subtitle && <p className={`text-sm font-semibold ${card.subtitleColor}`}>{card.subtitle}</p>}
         </Card>
       ))}

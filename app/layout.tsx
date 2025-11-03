@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" className="dark">
       <body className={`${vazirmatn.variable} font-sans antialiased`}>
         <Sidebar />
-        <main className="md:pr-64">{children}</main>
+        <main className="md:pr-20">{children}</main>
         <Analytics />
       </body>
     </html>
