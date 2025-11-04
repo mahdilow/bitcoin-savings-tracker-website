@@ -1,8 +1,11 @@
 "use client"
 
+import { AlertDialogTrigger } from "@/components/ui/alert-dialog"
+
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,23 +15,56 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import type { Purchase } from "@/lib/types"
 import { formatCurrency, formatBTC } from "@/lib/utils"
 import { isoToJalali } from "@/lib/jalali-utils"
-import { Edit, Trash2, ShoppingCart } from "lucide-react"
+import { Edit, Trash2, ShoppingCart, X } from "lucide-react"
 import { ImportExportButtons } from "@/components/import-export-buttons"
 
 interface PurchaseHistoryProps {
   purchases: Purchase[]
   onEdit: (purchase: Purchase) => void
   onDelete: (id: string) => void
+  onDeleteMultiple: (ids: string[]) => void
   onImport: (purchases: Purchase[]) => void
 }
 
-export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: PurchaseHistoryProps) {
+export function PurchaseHistory({ purchases, onEdit, onDelete, onDeleteMultiple, onImport }: PurchaseHistoryProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  const isAllSelected = purchases.length > 0 && selectedIds.size === purchases.length
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < purchases.length
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(purchases.map((p) => p.id)))
+    }
+  }
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const handleDeleteSelected = () => {
+    onDeleteMultiple(Array.from(selectedIds))
+    setSelectedIds(new Set())
+    setShowDeleteDialog(false)
+  }
+
+  const handleCancelSelection = () => {
+    setSelectedIds(new Set())
+  }
 
   const handleDeleteConfirm = () => {
     if (deleteId) {
@@ -40,9 +76,67 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-2xl font-bold text-foreground">تاریخچه خریدها</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-foreground">تاریخچه خریدها</h2>
+          {purchases.length > 0 && (
+            <>
+              <div className="hidden md:flex items-center gap-2">
+                <Checkbox
+                  id="select-all"
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <label
+                  htmlFor="select-all"
+                  className="text-sm text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
+                >
+                  انتخاب همه
+                </label>
+              </div>
+              <Button
+                size="sm"
+                variant={isAllSelected ? "default" : "outline"}
+                onClick={handleSelectAll}
+                className="md:hidden"
+              >
+                {isAllSelected ? "لغو انتخاب همه" : "انتخاب همه"}
+              </Button>
+            </>
+          )}
+        </div>
         <ImportExportButtons purchases={purchases} onImport={onImport} />
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+          <Card className="px-6 py-4 border-2 border-primary/50 bg-card/95 backdrop-blur-sm shadow-2xl shadow-primary/20">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-foreground">{selectedIds.size} مورد انتخاب شده</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCancelSelection}
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <X className="w-4 h-4 ml-1" />
+                  لغو
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  <Trash2 className="w-4 h-4 ml-1" />
+                  حذف
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {purchases.length === 0 ? (
         <Card className="p-12 text-center border-border">
@@ -58,84 +152,122 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onImport }: Purch
         </Card>
       ) : (
         <div className="max-h-[500px] md:max-h-[600px] overflow-y-auto pr-3 space-y-3 custom-scrollbar rounded-lg">
-          {purchases.map((purchase, index) => (
-            <Card
-              key={purchase.id}
-              className="p-4 border-border hover:border-primary/30 transition-all duration-200 animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <p className="text-sm text-muted-foreground">{isoToJalali(purchase.date)}</p>
-                    {purchase.notes && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                        {purchase.notes}
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">مقدار: </span>
-                      <span className="font-semibold text-foreground">{formatBTC(purchase.btcAmount)} BTC</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">قیمت: </span>
-                      <span className="font-semibold text-foreground">
-                        {formatCurrency(purchase.usdPriceAtPurchase)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">مجموع: </span>
-                      <span className="font-semibold text-primary">{formatCurrency(purchase.totalUsdSpent)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onEdit(purchase)}
-                    className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+          {purchases.map((purchase, index) => {
+            const isSelected = selectedIds.has(purchase.id)
+            return (
+              <Card
+                key={purchase.id}
+                className={`p-4 border-border transition-all duration-200 animate-fade-in ${
+                  isSelected ? "border-primary bg-primary/5 shadow-md shadow-primary/10" : "hover:border-primary/30"
+                }`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center justify-center w-10 h-10 md:w-auto md:h-auto cursor-pointer"
+                    onClick={() => handleSelectOne(purchase.id)}
                   >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => handleSelectOne(purchase.id)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary w-5 h-5 md:w-4 md:h-4"
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <p className="text-sm text-muted-foreground">{isoToJalali(purchase.date)}</p>
+                      {purchase.notes && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                          {purchase.notes}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">مقدار: </span>
+                        <span className="font-semibold text-foreground">{formatBTC(purchase.btcAmount)} BTC</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">قیمت: </span>
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency(purchase.usdPriceAtPurchase)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">مجموع: </span>
+                        <span className="font-semibold text-primary">{formatCurrency(purchase.totalUsdSpent)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedIds.size === 0 && (
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => setDeleteId(purchase.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => onEdit(purchase)}
+                        className="text-muted-foreground hover:text-primary hover:bg-primary/10"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Edit className="w-4 h-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>تایید حذف</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          آیا از حذف این رکورد خرید اطمینان دارید؟ این عمل غیرقابل بازگشت است.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeleteId(null)}>انصراف</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteConfirm}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          حذف
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteId(purchase.id)}
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>تایید حذف</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              آیا از حذف این رکورد خرید اطمینان دارید؟ این عمل غیرقابل بازگشت است.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setDeleteId(null)}>انصراف</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteConfirm}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              حذف
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تایید حذف چندگانه</AlertDialogTitle>
+            <AlertDialogDescription>
+              آیا از حذف {selectedIds.size} رکورد خرید اطمینان دارید؟ این عمل غیرقابل بازگشت است.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>انصراف</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelected}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              حذف همه
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

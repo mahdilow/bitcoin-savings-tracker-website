@@ -87,6 +87,10 @@ export default function DashboardPage() {
     setPurchases((prev) => prev.filter((p) => p.id !== id))
   }
 
+  const handleDeleteMultiplePurchases = (ids: string[]) => {
+    setPurchases((prev) => prev.filter((p) => !ids.includes(p.id)))
+  }
+
   const handleImportPurchases = (importedPurchases: Purchase[]) => {
     setPurchases((prev) => {
       const combined = [...prev, ...importedPurchases]
@@ -121,7 +125,7 @@ export default function DashboardPage() {
         <PriceTicker onPriceUpdate={handlePriceUpdate} currentBTCPriceIRT={currentBTCPriceIRT} />
 
         {hasNoPurchases ? (
-          <EmptyState onAddFirst={() => setIsDialogOpen(true)} />
+          <EmptyState onAddFirst={() => setIsDialogOpen(true)} onImport={handleImportPurchases} />
         ) : (
           <>
             <MetricsCards metrics={metrics} />
@@ -130,6 +134,7 @@ export default function DashboardPage() {
               purchases={purchases}
               onEdit={handleEditPurchase}
               onDelete={handleDeletePurchase}
+              onDeleteMultiple={handleDeleteMultiplePurchases}
               onImport={handleImportPurchases}
             />
           </>
