@@ -9,13 +9,15 @@ import { MetricsCards } from "@/components/metrics-cards"
 import { AddPurchaseDialog } from "@/components/add-purchase-dialog"
 import { PurchaseHistory } from "@/components/purchase-history"
 import { PortfolioChart } from "@/components/portfolio-chart"
-import { mockPurchases } from "@/lib/mock-data"
+import { EmptyState } from "@/components/empty-state"
 import { quotes } from "@/lib/quotes"
 import { getDailyQuote, calculateMetrics } from "@/lib/utils"
+import { storage } from "@/lib/storage"
 import type { Purchase } from "@/lib/types"
 
 export default function DashboardPage() {
-  const [purchases, setPurchases] = useState<Purchase[]>(mockPurchases)
+  const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
   const [currentBTCPrice, setCurrentBTCPrice] = useState(67000)
   const [currentBTCPriceIRT, setCurrentBTCPriceIRT] = useState(0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -23,6 +25,18 @@ export default function DashboardPage() {
 
   const dailyQuote = getDailyQuote(quotes)
   const metrics = calculateMetrics(purchases, currentBTCPrice, currentBTCPriceIRT)
+
+  useEffect(() => {
+    const loadedPurchases = storage.loadPurchases()
+    setPurchases(loadedPurchases)
+    setIsLoaded(true)
+  }, [])
+
+  useEffect(() => {
+    if (isLoaded) {
+      storage.savePurchases(purchases)
+    }
+  }, [purchases, isLoaded])
 
   useEffect(() => {
     const fetchIrtPrice = async () => {
@@ -87,6 +101,12 @@ export default function DashboardPage() {
     }
   }
 
+  if (!isLoaded) {
+    return null
+  }
+
+  const hasNoPurchases = purchases.length === 0
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -99,14 +119,21 @@ export default function DashboardPage() {
 
         <QuoteCard quote={dailyQuote} />
         <PriceTicker onPriceUpdate={handlePriceUpdate} currentBTCPriceIRT={currentBTCPriceIRT} />
-        <MetricsCards metrics={metrics} />
-        <PortfolioChart purchases={purchases} currentBTCPrice={currentBTCPrice} />
-        <PurchaseHistory
-          purchases={purchases}
-          onEdit={handleEditPurchase}
-          onDelete={handleDeletePurchase}
-          onImport={handleImportPurchases}
-        />
+
+        {hasNoPurchases ? (
+          <EmptyState onAddFirst={() => setIsDialogOpen(true)} />
+        ) : (
+          <>
+            <MetricsCards metrics={metrics} />
+            <PortfolioChart purchases={purchases} currentBTCPrice={currentBTCPrice} />
+            <PurchaseHistory
+              purchases={purchases}
+              onEdit={handleEditPurchase}
+              onDelete={handleDeletePurchase}
+              onImport={handleImportPurchases}
+            />
+          </>
+        )}
 
         <Button
           onClick={() => setIsDialogOpen(true)}
