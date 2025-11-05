@@ -10,6 +10,7 @@ import { AddPurchaseDialog } from "@/components/add-purchase-dialog"
 import { PurchaseHistory } from "@/components/purchase-history"
 import { PortfolioChart } from "@/components/portfolio-chart"
 import { EmptyState } from "@/components/empty-state"
+import { StatisticsPage } from "@/components/pages/statistics-page"
 import { quotes } from "@/lib/quotes"
 import { getDailyQuote, calculateMetrics } from "@/lib/utils"
 import { storage } from "@/lib/storage"
@@ -22,9 +23,29 @@ export default function DashboardPage() {
   const [currentBTCPriceIRT, setCurrentBTCPriceIRT] = useState(0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null)
+  const [activePage, setActivePage] = useState<string>("home")
 
   const dailyQuote = getDailyQuote(quotes)
   const metrics = calculateMetrics(purchases, currentBTCPrice, currentBTCPriceIRT)
+
+  useEffect(() => {
+    const handleNavigate = (event: CustomEvent) => {
+      const page = event.detail
+      if (
+        page === "dca" ||
+        page === "buy" ||
+        page === "statistics" ||
+        page === "news" ||
+        page === "achievements" ||
+        page === "settings"
+      ) {
+        setActivePage(page)
+      }
+    }
+
+    window.addEventListener("navigate", handleNavigate as EventListener)
+    return () => window.removeEventListener("navigate", handleNavigate as EventListener)
+  }, [])
 
   useEffect(() => {
     const loadedPurchases = storage.loadPurchases()
@@ -114,30 +135,53 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="text-center mb-8 animate-fade-in pt-4 md:pt-0">
-          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-2">داشبورد پس‌انداز بیت‌کوین</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            پرتفوی خود را مدیریت و رشد سرمایه‌گذاری خود را دنبال کنید
-          </p>
-        </div>
-
-        <QuoteCard quote={dailyQuote} />
-        <PriceTicker onPriceUpdate={handlePriceUpdate} currentBTCPriceIRT={currentBTCPriceIRT} />
-
-        {hasNoPurchases ? (
-          <EmptyState onAddFirst={() => setIsDialogOpen(true)} onImport={handleImportPurchases} />
-        ) : (
+        {activePage === "home" ? (
           <>
-            <MetricsCards metrics={metrics} />
-            <PortfolioChart purchases={purchases} currentBTCPrice={currentBTCPrice} />
-            <PurchaseHistory
+            <div className="text-center mb-8 animate-fade-in pt-4 md:pt-0">
+              <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-2">داشبورد پس‌انداز بیت‌کوین</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                پرتفوی خود را مدیریت و رشد سرمایه‌گذاری خود را دنبال کنید
+              </p>
+            </div>
+
+            <QuoteCard quote={dailyQuote} />
+            <PriceTicker onPriceUpdate={handlePriceUpdate} currentBTCPriceIRT={currentBTCPriceIRT} />
+
+            {hasNoPurchases ? (
+              <EmptyState onAddFirst={() => setIsDialogOpen(true)} onImport={handleImportPurchases} />
+            ) : (
+              <>
+                <MetricsCards metrics={metrics} />
+                <PortfolioChart purchases={purchases} currentBTCPrice={currentBTCPrice} />
+                <PurchaseHistory
+                  purchases={purchases}
+                  onEdit={handleEditPurchase}
+                  onDelete={handleDeletePurchase}
+                  onDeleteMultiple={handleDeleteMultiplePurchases}
+                  onImport={handleImportPurchases}
+                />
+              </>
+            )}
+          </>
+        ) : activePage === "statistics" ? (
+          <>
+            <div className="text-center mb-8 animate-fade-in pt-4 md:pt-0">
+              <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-2">آمار و تحلیل</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                اطلاعات کامل بازار بیت‌کوین و تحلیل دقیق پرتفوی شما
+              </p>
+            </div>
+            <StatisticsPage
               purchases={purchases}
-              onEdit={handleEditPurchase}
-              onDelete={handleDeletePurchase}
-              onDeleteMultiple={handleDeleteMultiplePurchases}
-              onImport={handleImportPurchases}
+              currentBTCPrice={currentBTCPrice}
+              currentBTCPriceIRT={currentBTCPriceIRT}
             />
           </>
+        ) : (
+          <div className="text-center py-20">
+            <h2 className="text-2xl font-bold text-muted-foreground">به زودی...</h2>
+            <p className="text-muted-foreground mt-2">این بخش در حال توسعه است</p>
+          </div>
         )}
 
         <Button

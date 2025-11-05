@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, Bitcoin } from "lucide-react"
 import { formatCurrency, formatNumber } from "@/lib/utils"
 import type { BitcoinPrice } from "@/lib/types"
+import { apiCache, CACHE_DURATIONS } from "@/lib/api-cache" // Import apiCache and CACHE_DURATIONS
 
 interface PriceTickerProps {
   onPriceUpdate: (price: number) => void
@@ -21,6 +22,16 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
 
     const fetchPrice = async () => {
       try {
+        const cacheKey = "btc_price_simple"
+        const cached = apiCache.get<BitcoinPrice>(cacheKey)
+
+        if (cached) {
+          setPrice(cached)
+          onPriceUpdate(cached.usd)
+          setIsLoading(false)
+          return
+        }
+
         const response = await fetch(
           "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true",
         )
@@ -29,6 +40,9 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
           usd: data.bitcoin.usd,
           usd_24h_change: data.bitcoin.usd_24h_change,
         }
+
+        apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
+
         setPrice(newPrice)
         onPriceUpdate(newPrice.usd)
         setIsLoading(false)
@@ -104,7 +118,11 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
           <div>
             <p className="text-sm text-muted-foreground mb-1">قیمت فعلی بیت‌کوین</p>
             <p className="text-3xl font-bold text-foreground">{formatCurrency(price.usd)}</p>
-            {currentBTCPriceIRT > 0 && <p className="text-xl font-bold text-muted-foreground mt-1">{formatCurrency(currentBTCPriceIRT, "IRT")}</p>}
+            {currentBTCPriceIRT > 0 && (
+              <p className="text-xl font-bold text-muted-foreground mt-1">
+                {formatCurrency(currentBTCPriceIRT, "IRT")}
+              </p>
+            )}
           </div>
         </div>
 
