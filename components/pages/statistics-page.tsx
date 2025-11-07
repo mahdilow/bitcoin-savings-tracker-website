@@ -27,6 +27,8 @@ interface BitcoinMarketData {
   totalSupply: number
   ath: number
   atl: number
+  athDate: string
+  atlDate: string
   dominance: number
 }
 
@@ -60,6 +62,13 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
         )
         const data = await response.json()
 
+        const circulatingSupply = data.market_data.circulating_supply
+        const maxSupply = 21000000 // Bitcoin's max supply
+        const supplyPercentage = (circulatingSupply / maxSupply) * 100
+
+        const athDate = new Date(data.market_data.ath_date.usd)
+        const atlDate = new Date(data.market_data.atl_date.usd)
+
         const marketDataResult = {
           price: data.market_data.current_price.usd,
           marketCap: data.market_data.market_cap.usd,
@@ -71,7 +80,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           totalSupply: data.market_data.total_supply,
           ath: data.market_data.ath.usd,
           atl: data.market_data.atl.usd,
-          dominance: data.market_data.market_cap_percentage?.btc || 0,
+          athDate: toJalali(athDate.toISOString()),
+          atlDate: toJalali(atlDate.toISOString()),
+          dominance: data.market_data.price_change_percentage_24h,
         }
 
         apiCache.set(cacheKey, marketDataResult, CACHE_DURATIONS.MARKET_DATA)
@@ -172,9 +183,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold">
-                ${formatPersianNumber(((marketData?.marketCap || 0) / 1e9).toFixed(2))}B
+                ${formatPersianNumber(((marketData?.marketCap || 0) / 1e12).toFixed(2))}T
               </div>
-              <div className="text-xs text-muted-foreground mt-1">میلیارد دلار</div>
+              <div className="text-xs text-muted-foreground mt-1">تریلیون دلار</div>
             </CardContent>
           </Card>
 
@@ -192,13 +203,25 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
 
           <Card className="bg-card/50 backdrop-blur">
             <CardHeader className="pb-2">
-              <CardDescription>تسلط بازار</CardDescription>
+              <CardDescription>تغییرات ۲۴ ساعته</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-xl font-bold text-primary">
-                {formatPersianNumber((marketData?.dominance || 0).toFixed(2))}%
+              <div
+                className={cn(
+                  "text-xl font-bold",
+                  (marketData?.dominance || 0) >= 0 ? "text-green-500" : "text-red-500",
+                )}
+              >
+                <div className="flex items-center gap-1">
+                  {(marketData?.dominance || 0) >= 0 ? (
+                    <TrendingUp className="w-5 h-5" />
+                  ) : (
+                    <TrendingDown className="w-5 h-5" />
+                  )}
+                  {formatPersianNumber(Math.abs(marketData?.dominance || 0).toFixed(2))}%
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">سهم از بازار</div>
+              <div className="text-xs text-muted-foreground mt-1">از دیروز</div>
             </CardContent>
           </Card>
         </div>
@@ -361,6 +384,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardTitle className="text-2xl text-green-500">
                 ${formatPersianNumber(marketData?.ath.toLocaleString() || "0")}
               </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-1">
+                {marketData?.athDate || ""}
+              </CardDescription>
             </CardHeader>
           </Card>
 
@@ -368,8 +394,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <CardHeader>
               <CardDescription>پایین‌ترین قیمت تاریخ</CardDescription>
               <CardTitle className="text-2xl text-red-500">
-                ${formatPersianNumber(marketData?.atl.toLocaleString() || "0")}
+                ${formatPersianNumber(marketData?.atl.toFixed(2) || "0")}
               </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-1">
+                {marketData?.atlDate || ""}
+              </CardDescription>
             </CardHeader>
           </Card>
 
@@ -591,8 +620,8 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         const value = payload.profitLossPercent
                         const fill = value >= 0 ? "url(#profitGradient)" : "url(#lossGradient)"
 
-                        // For negative values, adjust y position and make height positive
-                        const adjustedY = value >= 0 ? y : y
+                        // We need to adjust y to start from the 0 line and make height positive
+                        const adjustedY = value >= 0 ? y : y + height
                         const adjustedHeight = Math.abs(height)
 
                         return (
