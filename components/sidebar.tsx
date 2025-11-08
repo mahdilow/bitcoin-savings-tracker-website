@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { TrendingUp, ShoppingCart, BarChart3, Trophy, Settings, Menu, X, Bitcoin, Newspaper } from "lucide-react"
+import { TrendingUp, ShoppingCart, BarChart3, Trophy, Settings, Bitcoin, Newspaper } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -49,30 +49,11 @@ const menuItems = [
 ]
 
 export function Sidebar({ className }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(false)
   const [activeItem, setActiveItem] = useState<string | null>(null)
   const [isHovered, setIsHovered] = useState(false)
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 right-4 z-50 md:hidden bg-card hover:bg-card/80"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
         onMouseEnter={() => setIsHovered(true)}
@@ -80,7 +61,7 @@ export function Sidebar({ className }: SidebarProps) {
         className={cn(
           "fixed right-0 top-0 h-screen bg-card border-l border-border z-40 transition-all duration-300 ease-in-out",
           "flex flex-col",
-          isOpen ? "translate-x-0 w-64" : "translate-x-full w-64",
+          "translate-x-full w-64",
           "md:translate-x-0",
           isHovered ? "md:w-64" : "md:w-[72px]",
           className,
@@ -115,7 +96,6 @@ export function Sidebar({ className }: SidebarProps) {
                 key={item.id}
                 onClick={() => {
                   setActiveItem(item.id)
-                  setIsOpen(false)
                   window.dispatchEvent(new CustomEvent("navigate", { detail: item.id }))
                 }}
                 className={cn(
