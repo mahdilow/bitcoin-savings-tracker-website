@@ -13,14 +13,14 @@ const vazirmatn = Vazirmatn({
 })
 
 export const metadata: Metadata = {
-  title: "ردیاب پس‌انداز بیت‌کوین",
-  description: "داشبورد ردیابی سرمایه‌گذاری بیت‌کوین",
+  title: "Oryn - ردیاب پس‌انداز بیت‌کوین",
+  description: "داشبورد هوشمند ردیابی سرمایه‌گذاری بیت‌کوین با Oryn",
   generator: "v0.app",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "بیت‌کوین تریکر",
+    title: "Oryn",
   },
   formatDetection: {
     telephone: false,
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fa" dir="rtl" className="dark">
+    <html lang="fa" dir="rtl">
       <head>
         <link rel="icon" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/icon-192.png" />

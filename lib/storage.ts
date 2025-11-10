@@ -1,6 +1,6 @@
 import type { Purchase } from "./types"
 
-const STORAGE_KEY = "bitcoin-tracker-purchases"
+const STORAGE_KEY = "oryn-purchases"
 
 export const storage = {
   // Load purchases from localStorage

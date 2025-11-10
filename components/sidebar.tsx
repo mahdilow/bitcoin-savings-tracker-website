@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { TrendingUp, ShoppingCart, BarChart3, Trophy, Settings, Bitcoin, Newspaper } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { TrendingUp, ShoppingCart, BarChart3, Trophy, Settings, Newspaper } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 interface SidebarProps {
   className?: string
@@ -67,23 +67,35 @@ export function Sidebar({ className }: SidebarProps) {
           className,
         )}
       >
-        {/* Logo/Header */}
-        <div className="p-6 border-b border-border min-h-[88px] flex items-center">
+        <button
+          onClick={() => {
+            setActiveItem(null)
+            window.dispatchEvent(new CustomEvent("navigate", { detail: "home" }))
+          }}
+          className={cn(
+            "p-6 border-b border-border min-h-[88px] flex items-center justify-center transition-all duration-200",
+            "hover:bg-primary/10",
+            activeItem === null && "bg-primary/10",
+          )}
+        >
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Bitcoin className="w-6 h-6 text-primary" />
-            </div>
             <div
               className={cn(
-                "transition-all duration-300 overflow-hidden",
-                isHovered ? "md:opacity-100 md:w-auto" : "md:opacity-0 md:w-0",
+                "transition-all duration-300 overflow-hidden flex items-center",
+                isHovered ? "md:opacity-100 md:w-auto" : "md:opacity-100 md:w-auto",
               )}
             >
-              <h2 className="font-bold text-lg text-foreground whitespace-nowrap">بیت‌کوین تریکر</h2>
-              <p className="text-xs text-muted-foreground whitespace-nowrap">Bitcoin Tracker</p>
+              <Image
+                src="/oryn-logo.png"
+                alt="Oryn"
+                width={isHovered ? 120 : 40}
+                height={isHovered ? 60 : 40}
+                className={cn("transition-all duration-300 object-contain", isHovered ? "md:w-[120px]" : "md:w-[40px]")}
+                priority
+              />
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -127,7 +139,8 @@ export function Sidebar({ className }: SidebarProps) {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Theme Toggle Removed */}
+
         <div
           className={cn(
             "p-4 border-t border-border transition-all duration-300 overflow-hidden",
@@ -135,7 +148,7 @@ export function Sidebar({ className }: SidebarProps) {
           )}
         >
           <div className="bg-primary/5 rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">نسخه آزمایشی</p>
+            <p className="text-xs text-muted-foreground mb-1">Powered by Oryn</p>
             <p className="text-xs font-medium text-primary">v1.0.0</p>
           </div>
         </div>

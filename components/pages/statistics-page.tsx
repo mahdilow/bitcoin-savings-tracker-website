@@ -334,10 +334,16 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+                      stroke="var(--grid-stroke)"
+                      opacity={0.7}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -346,7 +352,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       minTickGap={50}
                     />
                     <YAxis
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -512,10 +518,16 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+                      stroke="var(--grid-stroke)"
+                      opacity={0.7}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -523,7 +535,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     />
                     <YAxis
                       yAxisId="left"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -533,7 +545,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     <YAxis
                       yAxisId="right"
                       orientation="right"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -753,10 +765,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardContent>
           </Card>
 
+          {/* Monthly Performance Chart */}
           <Card>
             <CardHeader>
               <CardTitle>عملکرد ماهانه</CardTitle>
-              <CardDescription>سود/زیان در هر ماه</CardDescription>
+              <CardDescription>سود/زیان درصدی در هر ماه</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
@@ -772,28 +785,40 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+                      stroke="var(--grid-stroke)"
+                      opacity={0.7}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="month"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dx={-10}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) => `${value.toFixed(0)}%`}
+                      label={{
+                        value: "سود/زیان (%)",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { textAnchor: "middle", fill: "hsl(var(--foreground))", fontSize: 12 },
+                      }}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null
                         const data = payload[0].payload
-                        const isProfit = data.profitLoss >= 0
+                        const isProfit = data.profitLossPercent >= 0
                         return (
                           <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 space-y-2">
                             <p className="text-xs text-muted-foreground font-medium">{data.month}</p>
@@ -804,21 +829,42 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                                 <TrendingDown className="w-4 h-4 text-red-500" />
                               )}
                               <span className={cn("text-xl font-bold", isProfit ? "text-green-500" : "text-red-500")}>
-                                ${formatPersianNumber(Math.abs(data.profitLoss).toLocaleString())}
+                                {isProfit ? "+" : ""}
+                                {formatPersianNumber(Math.abs(data.profitLossPercent).toFixed(2))}%
                               </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/50">
+                              <div className="flex justify-between gap-4">
+                                <span>سرمایه‌گذاری:</span>
+                                <span className="font-medium">
+                                  ${formatPersianNumber(data.invested?.toLocaleString() || "0")}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span>ارزش فعلی:</span>
+                                <span className="font-medium">
+                                  ${formatPersianNumber(data.currentValue?.toLocaleString() || "0")}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4 pt-1 border-t border-border/30">
+                                <span className="font-medium">{isProfit ? "سود" : "زیان"} مطلق:</span>
+                                <span className={cn("font-semibold", isProfit ? "text-green-500" : "text-red-500")}>
+                                  {isProfit ? "+" : ""}${formatPersianNumber(Math.abs(data.profitLoss).toFixed(2))}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         )
                       }}
                     />
                     <Bar
-                      dataKey="profitLoss"
+                      dataKey="profitLossPercent"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={60}
                       shape={(props: any) => {
                         const { x, y, width, height, payload } = props
-                        if (!payload || payload.profitLoss === undefined) return null
-                        const value = payload.profitLoss
+                        if (!payload || payload.profitLossPercent === undefined) return null
+                        const value = payload.profitLossPercent
                         const fill = value >= 0 ? "url(#profitBarGradient)" : "url(#lossBarGradient)"
                         const adjustedY = value >= 0 ? y : y + height
                         const adjustedHeight = Math.abs(height)
@@ -844,9 +890,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardContent>
                 <div className="text-2xl font-bold text-green-500 mb-1">{userStats.bestMonth.month}</div>
                 <div className="text-xl font-semibold text-green-500">
-                  +${formatPersianNumber(userStats.bestMonth.profitLoss.toLocaleString())}
+                  +{formatPersianNumber(userStats.bestMonth.profitLossPercent.toFixed(2))}%
                 </div>
-                <div className="text-sm text-muted-foreground mt-2">سود ماهانه</div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  (+${formatPersianNumber(userStats.bestMonth.profitLoss.toFixed(2))})
+                </div>
               </CardContent>
             </Card>
 
@@ -860,9 +908,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardContent>
                 <div className="text-2xl font-bold text-red-500 mb-1">{userStats.worstMonth.month}</div>
                 <div className="text-xl font-semibold text-red-500">
-                  ${formatPersianNumber(Math.abs(userStats.worstMonth.profitLoss).toLocaleString())}
+                  {formatPersianNumber(userStats.worstMonth.profitLossPercent.toFixed(2))}%
                 </div>
-                <div className="text-sm text-muted-foreground mt-2">زیان ماهانه</div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  (${formatPersianNumber(Math.abs(userStats.worstMonth.profitLoss).toFixed(2))})
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -991,17 +1041,23 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+                      stroke="var(--grid-stroke)"
+                      opacity={0.7}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -1097,17 +1153,23 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+                      stroke="var(--grid-stroke)"
+                      opacity={0.7}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="month"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="hsl(var(--foreground))"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -1172,8 +1234,8 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
       cumulativeBTC: 0,
       activityHeatmap: [],
       monthlyPerformance: [],
-      bestMonth: { month: "", profitLoss: 0 },
-      worstMonth: { month: "", profitLoss: 0 },
+      bestMonth: { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
+      worstMonth: { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
     }
   }
 
@@ -1263,11 +1325,11 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
     activityHeatmap.push(weekData)
   }
 
-  // Monthly performance
+  // Monthly performance - calculate profit/loss for purchases made in each month
   const monthlyPerformanceMap = new Map<string, { invested: number; btc: number }>()
   sortedPurchases.forEach((p) => {
     const jalaliDate = toJalali(p.date)
-    const monthKey = jalaliDate.substring(0, 7)
+    const monthKey = jalaliDate.substring(0, 7) // Get YYYY/MM format
     const existing = monthlyPerformanceMap.get(monthKey) || { invested: 0, btc: 0 }
     monthlyPerformanceMap.set(monthKey, {
       invested: existing.invested + p.totalUsdSpent,
@@ -1276,19 +1338,33 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
   })
 
   const monthlyPerformance = Array.from(monthlyPerformanceMap.entries())
-    .map(([month, data]) => ({
-      month,
-      profitLoss: data.btc * currentBTCPrice - data.invested,
-    }))
+    .map(([month, data]) => {
+      const currentValueOfMonthBTC = data.btc * currentBTCPrice
+      const profitLoss = currentValueOfMonthBTC - data.invested
+      const profitLossPercent = data.invested > 0 ? (profitLoss / data.invested) * 100 : 0
+
+      return {
+        month,
+        profitLossPercent, // Changed from profitLoss to profitLossPercent
+        profitLoss, // Keep absolute value for tooltip
+        invested: data.invested,
+        currentValue: currentValueOfMonthBTC,
+        btc: data.btc,
+      }
+    })
     .sort((a, b) => a.month.localeCompare(b.month))
 
   const bestMonth = monthlyPerformance.reduce(
-    (best, curr) => (curr.profitLoss > best.profitLoss ? curr : best),
-    monthlyPerformance[0] || { month: "", profitLoss: 0 },
+    (best, curr) => (curr.profitLossPercent > best.profitLossPercent ? curr : best),
+    monthlyPerformance.length > 0
+      ? monthlyPerformance[0]
+      : { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
   )
   const worstMonth = monthlyPerformance.reduce(
-    (worst, curr) => (curr.profitLoss < worst.profitLoss ? curr : worst),
-    monthlyPerformance[0] || { month: "", profitLoss: 0 },
+    (worst, curr) => (curr.profitLossPercent < worst.profitLossPercent ? curr : worst),
+    monthlyPerformance.length > 0
+      ? monthlyPerformance[0]
+      : { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
   )
 
   // Purchase analysis

@@ -11,6 +11,7 @@ import { PurchaseHistory } from "@/components/purchase-history"
 import { PortfolioChart } from "@/components/portfolio-chart"
 import { EmptyState } from "@/components/empty-state"
 import { StatisticsPage } from "@/components/pages/statistics-page"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { quotes } from "@/lib/quotes"
 import { getDailyQuote, calculateMetrics } from "@/lib/utils"
 import { storage } from "@/lib/storage"
@@ -31,7 +32,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleNavigate = (event: CustomEvent) => {
       const page = event.detail
-      if (
+      if (page === "home") {
+        setActivePage("home")
+      } else if (
         page === "dca" ||
         page === "buy" ||
         page === "statistics" ||
@@ -133,7 +136,11 @@ export default function DashboardPage() {
   const hasNoPurchases = purchases.length === 0
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8 relative">
+      <div className="absolute top-4 left-4 z-50">
+        <ThemeToggle />
+      </div>
+
       <div className="max-w-7xl mx-auto space-y-6">
         {activePage === "home" ? (
           <>

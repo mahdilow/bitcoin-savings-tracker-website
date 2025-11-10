@@ -61,21 +61,27 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
               <stop offset="95%" stopColor="rgb(59, 130, 246)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgb(42, 42, 42)" />
-          <XAxis dataKey="date" stroke="rgb(163, 163, 163)" style={{ fontSize: "12px" }} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
+            stroke="var(--grid-stroke)"
+            strokeOpacity={0.7}
+          />
+          <XAxis dataKey="date" stroke="hsl(var(--foreground))" style={{ fontSize: "12px" }} />
           <YAxis
-            stroke="rgb(163, 163, 163)"
+            stroke="hsl(var(--foreground))"
             style={{ fontSize: "12px" }}
             tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "rgb(26, 26, 26)",
-              border: "1px solid rgb(42, 42, 42)",
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
               direction: "rtl",
+              color: "hsl(var(--foreground))",
             }}
-            labelStyle={{ color: "rgb(255, 255, 255)" }}
+            labelStyle={{ color: "hsl(var(--foreground))" }}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const value = payload.find((p) => p.dataKey === "value")?.value as number
@@ -87,14 +93,14 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
                 return (
                   <div
                     style={{
-                      backgroundColor: "rgb(26, 26, 26)",
-                      border: "1px solid rgb(42, 42, 42)",
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                       padding: "12px",
                       direction: "rtl",
                     }}
                   >
-                    <p style={{ color: "rgb(255, 255, 255)", marginBottom: "8px", fontWeight: "bold" }}>{label}</p>
+                    <p style={{ color: "hsl(var(--foreground))", marginBottom: "8px", fontWeight: "bold" }}>{label}</p>
                     <p style={{ color: "rgb(247, 147, 26)", marginBottom: "4px" }}>
                       ارزش فعلی: {formatCurrency(value)}
                     </p>
@@ -103,7 +109,7 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
                     </p>
                     <div
                       style={{
-                        borderTop: "1px solid rgb(42, 42, 42)",
+                        borderTop: "1px solid hsl(var(--border))",
                         paddingTop: "8px",
                         marginTop: "4px",
                       }}
