@@ -5,6 +5,8 @@ import type { Purchase } from "@/lib/types"
 import { formatCurrency } from "@/lib/utils"
 import { isoToJalali } from "@/lib/jalali-utils"
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Legend } from "recharts"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 interface PortfolioChartProps {
   purchases: Purchase[]
@@ -12,6 +14,24 @@ interface PortfolioChartProps {
 }
 
 export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartProps) {
+  const { theme } = useTheme()
+  const [chartColors, setChartColors] = useState({
+    value: "",
+    invested: "",
+    grid: "",
+    text: "",
+  })
+
+  useEffect(() => {
+    const style = getComputedStyle(document.documentElement)
+    setChartColors({
+      value: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
+      invested: `rgb(${style.getPropertyValue("--primary").trim()})`,
+      grid: `rgb(${style.getPropertyValue("--border").trim()})`,
+      text: `rgb(${style.getPropertyValue("--foreground").trim()})`,
+    })
+  }, [theme])
+
   // Sort purchases by date
   const sortedPurchases = [...purchases].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
@@ -42,47 +62,33 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
     })
   }
 
-  if (purchases.length === 0) {
+  if (purchases.length === 0 || !chartColors.value) {
     return null
   }
 
   return (
     <Card className="p-6 border-border">
       <h2 className="text-2xl font-bold text-foreground mb-6">نمودار ارزش پرتفوی</h2>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={300} key={theme}>
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              <stop offset="5%" stopColor={chartColors.value} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={chartColors.value} stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0} />
+              <stop offset="5%" stopColor={chartColors.invested} stopOpacity={0.3} />
+              <stop offset="95%" stopColor={chartColors.invested} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-            stroke="var(--grid-stroke)"
-            strokeOpacity={0.7}
-          />
-          <XAxis dataKey="date" stroke="hsl(var(--foreground))" style={{ fontSize: "12px" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} strokeOpacity={0.7} />
+          <XAxis dataKey="date" stroke={chartColors.text} fontSize={12} />
           <YAxis
-            stroke="hsl(var(--foreground))"
-            style={{ fontSize: "12px" }}
+            stroke={chartColors.text}
+            fontSize={12}
             tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              direction: "rtl",
-              color: "hsl(var(--popover-foreground))",
-              boxShadow: "0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1)",
-            }}
-            labelStyle={{ color: "hsl(var(--popover-foreground))" }}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const value = payload.find((p) => p.dataKey === "value")?.value as number
@@ -92,40 +98,16 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
                 const isProfit = profitLoss >= 0
 
                 return (
-                  <div
-                    style={{
-                      backgroundColor: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      direction: "rtl",
-                      boxShadow:
-                        "0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1)",
-                    }}
-                  >
-                    <p style={{ color: "hsl(var(--popover-foreground))", marginBottom: "8px", fontWeight: "bold" }}>
-                      {label}
-                    </p>
-                    <p style={{ color: "hsl(var(--muted-foreground))", marginBottom: "4px" }}>
+                  <div className="bg-popover border border-border rounded-lg p-3 shadow-lg text-popover-foreground">
+                    <p className="font-bold mb-2">{label}</p>
+                    <p className="text-muted-foreground text-sm mb-1">
                       ارزش فعلی: {formatCurrency(value)}
                     </p>
-                    <p style={{ color: "hsl(var(--muted-foreground))", marginBottom: "8px" }}>
+                    <p className="text-muted-foreground text-sm mb-2">
                       سرمایه: {formatCurrency(invested)}
                     </p>
-                    <div
-                      style={{
-                        borderTop: "1px solid hsl(var(--border))",
-                        paddingTop: "8px",
-                        marginTop: "4px",
-                      }}
-                    >
-                      <p
-                        style={{
-                          color: isProfit ? "hsl(var(--success))" : "hsl(var(--destructive))",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                        }}
-                      >
+                    <div className="border-t border-border pt-2 mt-1">
+                      <p className={`font-bold text-sm ${isProfit ? "text-success" : "text-destructive"}`}>
                         {isProfit ? "سود" : "ضرر"}: {formatCurrency(Math.abs(profitLoss))} ({profitLossPercent}%)
                       </p>
                     </div>
@@ -142,11 +124,17 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
           <Area
             type="monotone"
             dataKey="invested"
-            stroke="hsl(var(--chart-4))"
+            stroke={chartColors.invested}
             strokeWidth={2}
             fill="url(#colorInvested)"
           />
-          <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorValue)" />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={chartColors.value}
+            strokeWidth={2}
+            fill="url(#colorValue)"
+          />
         </AreaChart>
       </ResponsiveContainer>
     </Card>

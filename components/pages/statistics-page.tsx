@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrendingUp, TrendingDown, DollarSign, Activity, Target, Calendar, Award, PieChart, Zap } from "lucide-react"
+import { useTheme } from "next-themes"
 import {
   Area,
   AreaChart,
@@ -51,6 +52,7 @@ interface PriceHistoryData {
 }
 
 export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT }: StatisticsPageProps) {
+  const { theme } = useTheme()
   const [marketData, setMarketData] = useState<BitcoinMarketData | null>(null)
   const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([])
   const [timeRange, setTimeRange] = useState<"7" | "30" | "90" | "365">("30")
@@ -63,6 +65,26 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
     x: number
     y: number
   } | null>(null)
+  const [chartColors, setChartColors] = useState({
+    positive: "",
+    negative: "",
+    invested: "",
+    grid: "",
+    text: "",
+  })
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const style = getComputedStyle(document.documentElement)
+    setChartColors({
+      positive: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
+      negative: `rgb(${style.getPropertyValue("--destructive").trim()})`,
+      invested: `rgb(${style.getPropertyValue("--primary").trim()})`,
+      grid: `rgb(${style.getPropertyValue("--border").trim()})`,
+      text: `rgb(${style.getPropertyValue("--foreground").trim()})`,
+    })
+  }, [theme])
 
   // Fetch Bitcoin market data
   useEffect(() => {
@@ -152,7 +174,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
 
   const userStats = calculateUserStatistics(purchases, currentBTCPrice, priceHistory)
 
-  if (isLoading) {
+  if (isLoading || !chartColors.positive) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
@@ -185,7 +207,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <div
                 className={cn(
                   "text-sm flex items-center gap-1 mt-1",
-                  (marketData?.priceChange24h || 0) >= 0 ? "text-green-500" : "text-red-500",
+                  (marketData?.priceChange24h || 0) >= 0 ? "text-success" : "text-destructive",
                 )}
               >
                 {(marketData?.priceChange24h || 0) >= 0 ? (
@@ -230,7 +252,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <div
                 className={cn(
                   "text-xl font-bold",
-                  (marketData?.dominance || 0) >= 0 ? "text-green-500" : "text-red-500",
+                  (marketData?.dominance || 0) >= 0 ? "text-success" : "text-destructive",
                 )}
               >
                 <div className="flex items-center gap-1">
@@ -304,8 +326,8 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         : timeRange === "30"
                           ? marketData?.priceChange30d
                           : marketData?.priceChange30d || 0) >= 0
-                        ? "text-green-500"
-                        : "text-red-500",
+                        ? "text-success"
+                        : "text-destructive",
                     )}
                   >
                     {(timeRange === "7"
@@ -336,22 +358,21 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <ResponsiveContainer width="100%" height={350}>
                   <AreaChart data={priceHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="priceGradientGreen" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
-                        <stop offset="50%" stopColor="hsl(var(--chart-2))" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
+                      <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.4} />
+                        <stop offset="50%" stopColor={chartColors.positive} stopOpacity={0.2} />
+                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-                      stroke="var(--grid-stroke)"
+                      stroke={chartColors.grid}
                       opacity={0.7}
                       vertical={false}
                     />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -360,7 +381,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       minTickGap={50}
                     />
                     <YAxis
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -375,7 +396,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         return (
                           <div className="bg-card border border-border rounded-lg shadow-lg p-3 space-y-1">
                             <p className="text-xs text-muted-foreground">{data.date}</p>
-                            <p className="text-lg font-bold text-green-500">
+                            <p className="text-lg font-bold text-success">
                               ${formatPersianNumber(data.price.toLocaleString())}
                             </p>
                           </div>
@@ -385,14 +406,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     <Area
                       type="monotone"
                       dataKey="price"
-                      stroke="hsl(var(--chart-2))"
-                      fill="url(#priceGradientGreen)"
+                      stroke={chartColors.positive}
+                      fill="url(#priceGradient)"
                       strokeWidth={2.5}
                       dot={false}
                       activeDot={{
                         r: 6,
-                        fill: "hsl(var(--chart-2))",
-                        stroke: "hsl(var(--background))",
+                        fill: chartColors.positive,
+                        stroke: "var(--background)",
                         strokeWidth: 2,
                       }}
                     />
@@ -405,10 +426,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
 
         {/* Additional Market Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-green-500/10 to-transparent">
+          <Card className="bg-gradient-to-br from-success/10 to-transparent">
             <CardHeader>
               <CardDescription>بالاترین قیمت تاریخ</CardDescription>
-              <CardTitle className="text-2xl text-green-500">
+              <CardTitle className="text-2xl text-success">
                 ${formatPersianNumber(marketData?.ath.toLocaleString() || "0")}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-1">
@@ -417,10 +438,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardHeader>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-500/10 to-transparent">
+          <Card className="bg-gradient-to-br from-destructive/10 to-transparent">
             <CardHeader>
               <CardDescription>پایین‌ترین قیمت تاریخ</CardDescription>
-              <CardTitle className="text-2xl text-red-500">
+              <CardTitle className="text-2xl text-destructive">
                 ${formatPersianNumber(marketData?.atl.toFixed(2) || "0")}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground mt-1">
@@ -449,21 +470,21 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gradient-to-br from-green-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-success/10 to-transparent">
               <CardHeader>
                 <CardTitle>بازده کل</CardTitle>
                 <CardDescription>سود/زیان مطلق</CardDescription>
               </CardHeader>
               <CardContent>
                 <div
-                  className={cn("text-3xl font-bold", userStats.totalReturn >= 0 ? "text-green-500" : "text-red-500")}
+                  className={cn("text-3xl font-bold", userStats.totalReturn >= 0 ? "text-success" : "text-destructive")}
                 >
                   ${formatPersianNumber(Math.abs(userStats.totalReturn).toLocaleString())}
                 </div>
                 <div
                   className={cn(
                     "text-lg font-semibold mt-2",
-                    userStats.totalReturnPercent >= 0 ? "text-green-500" : "text-red-500",
+                    userStats.totalReturnPercent >= 0 ? "text-success" : "text-destructive",
                   )}
                 >
                   {userStats.totalReturnPercent >= 0 ? "+" : ""}
@@ -472,13 +493,13 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-blue-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-chart-3/10 to-transparent">
               <CardHeader>
                 <CardTitle>بازده سالانه (CAGR)</CardTitle>
                 <CardDescription>نرخ رشد سالانه ترکیبی</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className={cn("text-3xl font-bold", userStats.cagr >= 0 ? "text-blue-500" : "text-red-500")}>
+                <div className={cn("text-3xl font-bold", userStats.cagr >= 0 ? "text-chart-3" : "text-destructive")}>
                   {formatPersianNumber(userStats.cagr.toFixed(2))}%
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
@@ -487,13 +508,13 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-chart-5/10 to-transparent">
               <CardHeader>
                 <CardTitle>همبستگی با BTC</CardTitle>
                 <CardDescription>میزان همخوانی با بازار</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-purple-500">
+                <div className="text-3xl font-bold text-chart-5">
                   {formatPersianNumber(userStats.correlationScore.toFixed(2))}
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
@@ -517,25 +538,20 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <ResponsiveContainer width="100%" height={350}>
                   <ComposedChart data={userStats.portfolioVsBTC} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="btcPriceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
+                      <linearGradient id="investedGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.invested} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={chartColors.invested} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-                      stroke="var(--grid-stroke)"
+                      stroke={chartColors.grid}
                       opacity={0.7}
                       vertical={false}
                     />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -543,7 +559,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     />
                     <YAxis
                       yAxisId="left"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -553,7 +569,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     <YAxis
                       yAxisId="right"
                       orientation="right"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -575,7 +591,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                               </div>
                               <div className="flex items-center justify-between gap-4">
                                 <span className="text-xs">قیمت BTC:</span>
-                                <span className="text-sm font-bold text-green-500">
+                                <span className="text-sm font-bold text-success">
                                   ${formatPersianNumber(payload[1]?.value?.toLocaleString() || "0")}
                                 </span>
                               </div>
@@ -590,8 +606,8 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       type="monotone"
                       dataKey="portfolioValue"
                       name="ارزش پرتفوی"
-                      stroke="hsl(var(--primary))"
-                      fill="url(#portfolioGradient)"
+                      stroke={chartColors.invested}
+                      fill="url(#investedGradient)"
                       strokeWidth={2.5}
                     />
                     <Line
@@ -599,7 +615,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       type="monotone"
                       dataKey="btcPrice"
                       name="قیمت BTC"
-                      stroke="hsl(var(--chart-2))"
+                      stroke={chartColors.positive}
                       strokeWidth={2}
                       dot={false}
                     />
@@ -609,10 +625,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-500/10 to-transparent">
+          <Card className="bg-gradient-to-br from-warning/10 to-transparent">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
+                <Zap className="w-5 h-5 text-warning" />
                 <CardTitle>مقایسه با استراتژی خرید و نگهداری</CardTitle>
               </div>
               <CardDescription>اگر در اولین خرید تمام سرمایه را یکجا سرمایه‌گذاری می‌کردید</CardDescription>
@@ -627,7 +643,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   <div
                     className={cn(
                       "text-sm font-semibold",
-                      userStats.totalReturnPercent >= 0 ? "text-green-500" : "text-red-500",
+                      userStats.totalReturnPercent >= 0 ? "text-success" : "text-destructive",
                     )}
                   >
                     {userStats.totalReturnPercent >= 0 ? "+" : ""}
@@ -636,13 +652,13 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">خرید یکجا (بنچمارک)</p>
-                  <div className="text-2xl font-bold text-amber-500 mb-1">
+                  <div className="text-2xl font-bold text-warning mb-1">
                     ${formatPersianNumber(userStats.holdStrategyValue.toLocaleString())}
                   </div>
                   <div
                     className={cn(
                       "text-sm font-semibold",
-                      userStats.holdStrategyReturn >= 0 ? "text-green-500" : "text-red-500",
+                      userStats.holdStrategyReturn >= 0 ? "text-success" : "text-destructive",
                     )}
                   >
                     {userStats.holdStrategyReturn >= 0 ? "+" : ""}
@@ -653,9 +669,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <div className="mt-4 p-3 bg-background/50 rounded-lg">
                 <p className="text-sm">
                   {userStats.totalReturnPercent > userStats.holdStrategyReturn ? (
-                    <span className="text-green-500 font-semibold">✓ استراتژی DCA شما بهتر عمل کرده است!</span>
+                    <span className="text-success font-semibold">✓ استراتژی DCA شما بهتر عمل کرده است!</span>
                   ) : (
-                    <span className="text-amber-500 font-semibold">→ خرید یکجا بازده بهتری داشت</span>
+                    <span className="text-warning font-semibold">→ خرید یکجا بازده بهتری داشت</span>
                   )}
                 </p>
               </div>
@@ -794,7 +810,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <p className="text-xs text-muted-foreground">مجموع سرمایه</p>
-                            <p className="text-sm font-semibold text-green-500">
+                            <p className="text-sm font-semibold text-success">
                               $
                               {formatPersianNumber(
                                 hoveredDay.purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0).toLocaleString(),
@@ -836,32 +852,31 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={userStats.monthlyPerformance} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="profitBarGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
+                      <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0.4} />
                       </linearGradient>
-                      <linearGradient id="lossBarGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} />
+                      <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.negative} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={chartColors.negative} stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-                      stroke="var(--grid-stroke)"
+                      stroke={chartColors.grid}
                       opacity={0.7}
                       vertical={false}
                     />
                     <XAxis
                       dataKey="month"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -871,7 +886,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         value: "سود/زیان (%)",
                         angle: -90,
                         position: "insideLeft",
-                        style: { textAnchor: "middle", fill: "hsl(var(--foreground))", fontSize: 12 },
+                        style: { textAnchor: "middle", fill: chartColors.text, fontSize: 12 },
                       }}
                     />
                     <Tooltip
@@ -884,11 +899,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                             <p className="text-xs text-muted-foreground font-medium">{data.month}</p>
                             <div className="flex items-center gap-2">
                               {isProfit ? (
-                                <TrendingUp className="w-4 h-4 text-green-500" />
+                                <TrendingUp className="w-4 h-4 text-success" />
                               ) : (
-                                <TrendingDown className="w-4 h-4 text-red-500" />
+                                <TrendingDown className="w-4 h-4 text-destructive" />
                               )}
-                              <span className={cn("text-xl font-bold", isProfit ? "text-green-500" : "text-red-500")}>
+                              <span className={cn("text-xl font-bold", isProfit ? "text-success" : "text-destructive")}>
                                 {isProfit ? "+" : ""}
                                 {formatPersianNumber(Math.abs(data.profitLossPercent).toFixed(2))}%
                               </span>
@@ -908,7 +923,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                               </div>
                               <div className="flex justify-between gap-4 pt-1 border-t border-border/30">
                                 <span className="font-medium">{isProfit ? "سود" : "زیان"} مطلق:</span>
-                                <span className={cn("font-semibold", isProfit ? "text-green-500" : "text-red-500")}>
+                                <span className={cn("font-semibold", isProfit ? "text-success" : "text-destructive")}>
                                   {isProfit ? "+" : ""}${formatPersianNumber(Math.abs(data.profitLoss).toFixed(2))}
                                 </span>
                               </div>
@@ -925,7 +940,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         const { x, y, width, height, payload } = props
                         if (!payload || payload.profitLossPercent === undefined) return null
                         const value = payload.profitLossPercent
-                        const fill = value >= 0 ? "url(#profitBarGradient)" : "url(#lossBarGradient)"
+                        const fill = value >= 0 ? "url(#positiveGradient)" : "url(#negativeGradient)"
                         const adjustedY = value >= 0 ? y : y + height
                         const adjustedHeight = Math.abs(height)
                         return (
@@ -940,16 +955,16 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-gradient-to-br from-green-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-success/10 to-transparent">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-green-500" />
+                  <Award className="w-5 h-5 text-success" />
                   <CardTitle>بهترین ماه</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500 mb-1">{userStats.bestMonth.month}</div>
-                <div className="text-xl font-semibold text-green-500">
+                <div className="text-2xl font-bold text-success mb-1">{userStats.bestMonth.month}</div>
+                <div className="text-xl font-semibold text-success">
                   +{formatPersianNumber(userStats.bestMonth.profitLossPercent.toFixed(2))}%
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
@@ -958,16 +973,16 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-destructive/10 to-transparent">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-red-500" />
+                  <TrendingDown className="w-5 h-5 text-destructive" />
                   <CardTitle>بدترین ماه</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-500 mb-1">{userStats.worstMonth.month}</div>
-                <div className="text-xl font-semibold text-red-500">
+                <div className="text-2xl font-bold text-destructive mb-1">{userStats.worstMonth.month}</div>
+                <div className="text-xl font-semibold text-destructive">
                   {formatPersianNumber(userStats.worstMonth.profitLossPercent.toFixed(2))}%
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
@@ -996,12 +1011,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <Card className="bg-card/50 backdrop-blur">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-green-500" />
+                  <Award className="w-4 h-4 text-success" />
                   <CardDescription>بهترین خرید</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-green-500">
+                <div className="text-xl font-bold text-success">
                   ${formatPersianNumber(userStats.bestPurchasePrice.toLocaleString())}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">کمترین قیمت</div>
@@ -1011,12 +1026,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <Card className="bg-card/50 backdrop-blur">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-red-500" />
+                  <TrendingDown className="w-4 h-4 text-destructive" />
                   <CardDescription>بدترین خرید</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-red-500">
+                <div className="text-xl font-bold text-destructive">
                   ${formatPersianNumber(userStats.worstPurchasePrice.toLocaleString())}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">بیشترین قیمت</div>
@@ -1046,35 +1061,35 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className={cn("text-3xl font-bold", userStats.roi >= 0 ? "text-green-500" : "text-red-500")}>
+                    <div className={cn("text-3xl font-bold", userStats.roi >= 0 ? "text-success" : "text-destructive")}>
                       {formatPersianNumber(userStats.roi.toFixed(2))}%
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">درصد سود کل</p>
                   </div>
                   {userStats.roi >= 0 ? (
-                    <TrendingUp className="w-12 h-12 text-green-500 opacity-50" />
+                    <TrendingUp className="w-12 h-12 text-success opacity-50" />
                   ) : (
-                    <TrendingDown className="w-12 h-12 text-red-500 opacity-50" />
+                    <TrendingDown className="w-12 h-12 text-destructive opacity-50" />
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-blue-500/10 to-transparent">
+            <Card className="bg-gradient-to-br from-chart-3/10 to-transparent">
               <CardHeader>
                 <CardTitle>قیمت سربه‌سر</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-3xl font-bold text-blue-500">
+                    <div className="text-3xl font-bold text-chart-3">
                       ${formatPersianNumber(userStats.breakEvenPrice.toLocaleString())}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
                       {currentBTCPrice >= userStats.breakEvenPrice ? "در سود هستید" : "در ضرر هستید"}
                     </p>
                   </div>
-                  <DollarSign className="w-12 h-12 text-blue-500 opacity-50" />
+                  <DollarSign className="w-12 h-12 text-chart-3 opacity-50" />
                 </div>
               </CardContent>
             </Card>
@@ -1091,32 +1106,31 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={userStats.purchaseAnalysis} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
+                      <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0.4} />
                       </linearGradient>
-                      <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} />
+                      <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.negative} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={chartColors.negative} stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-                      stroke="var(--grid-stroke)"
+                      stroke={chartColors.grid}
                       opacity={0.7}
                       vertical={false}
                     />
                     <XAxis
                       dataKey="date"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -1154,11 +1168,11 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                                 <p className="text-xs text-muted-foreground font-medium">{isProfit ? "سود" : "زیان"}</p>
                                 <div className="flex items-center gap-1.5">
                                   {isProfit ? (
-                                    <TrendingUp className="w-4 h-4 text-green-500" />
+                                    <TrendingUp className="w-4 h-4 text-success" />
                                   ) : (
-                                    <TrendingDown className="w-4 h-4 text-red-500" />
+                                    <TrendingDown className="w-4 h-4 text-destructive" />
                                   )}
-                                  <p className={cn("text-lg font-bold", isProfit ? "text-green-500" : "text-red-500")}>
+                                  <p className={cn("text-lg font-bold", isProfit ? "text-success" : "text-destructive")}>
                                     {isProfit ? "+" : ""}
                                     {formatPersianNumber(Math.abs(data.profitLossPercent).toFixed(2))}%
                                   </p>
@@ -1179,7 +1193,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                           return null
                         }
                         const value = payload.profitLossPercent
-                        const fill = value >= 0 ? "url(#profitGradient)" : "url(#lossGradient)"
+                        const fill = value >= 0 ? "url(#positiveGradient)" : "url(#negativeGradient)"
 
                         // We need to adjust y to start from the 0 line and make height positive
                         const adjustedY = value >= 0 ? y : y + height
@@ -1207,28 +1221,27 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={userStats.monthlyInvestment} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="investmentGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                      <linearGradient id="investedGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartColors.invested} stopOpacity={0.9} />
+                        <stop offset="100%" stopColor={chartColors.invested} stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="[--grid-stroke:#94a3b8] dark:[--grid-stroke:hsl(var(--border))]"
-                      stroke="var(--grid-stroke)"
+                      stroke={chartColors.grid}
                       opacity={0.7}
                       vertical={false}
                     />
                     <XAxis
                       dataKey="month"
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       dy={10}
                     />
                     <YAxis
-                      stroke="hsl(var(--foreground))"
+                      stroke={chartColors.text}
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
@@ -1256,7 +1269,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         )
                       }}
                     />
-                    <Bar dataKey="amount" fill="url(#investmentGradient)" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                    <Bar dataKey="amount" fill="url(#investedGradient)" radius={[6, 6, 0, 0]} maxBarSize={60} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
