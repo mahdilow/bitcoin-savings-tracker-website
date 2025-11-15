@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Plus } from "lucide-react"
+import { Plus } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { QuoteCard } from "@/components/quote-card"
 import { PriceTicker } from "@/components/price-ticker"
@@ -12,6 +12,7 @@ import { PortfolioChart } from "@/components/portfolio-chart"
 import { EmptyState } from "@/components/empty-state"
 import { StatisticsPage } from "@/components/pages/statistics-page"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { CloudSyncButton } from "@/components/cloud-sync-button"
 import { quotes } from "@/lib/quotes"
 import { getDailyQuote, calculateMetrics } from "@/lib/utils"
 import { storage } from "@/lib/storage"
@@ -137,8 +138,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 relative">
-      <div className="absolute top-4 left-4 z-50">
+      <div className="absolute top-4 left-4 right-4 z-50 flex justify-between items-center">
         <ThemeToggle />
+        <CloudSyncButton purchases={purchases} />
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6">

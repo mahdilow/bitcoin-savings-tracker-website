@@ -1,6 +1,7 @@
 import type { Purchase } from "./types"
 
 const STORAGE_KEY = "oryn-purchases"
+const CLOUD_SYNC_KEY = "oryn-cloud-sync-enabled"
 
 export const storage = {
   // Load purchases from localStorage
@@ -50,5 +51,23 @@ export const storage = {
     } catch (error) {
       console.error("Failed to clear purchases from localStorage:", error)
     }
+  },
+
+  // Check if cloud sync is enabled
+  isCloudSyncEnabled(): boolean {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(CLOUD_SYNC_KEY) === "true"
+  },
+
+  // Enable cloud sync
+  enableCloudSync(): void {
+    if (typeof window === "undefined") return
+    localStorage.setItem(CLOUD_SYNC_KEY, "true")
+  },
+
+  // Disable cloud sync
+  disableCloudSync(): void {
+    if (typeof window === "undefined") return
+    localStorage.removeItem(CLOUD_SYNC_KEY)
   },
 }
