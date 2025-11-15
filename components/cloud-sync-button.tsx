@@ -34,12 +34,38 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
     checkSyncStatus()
   }, [])
 
+  useEffect(() => {
+    if (!mounted) return
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAuthStatus()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+    
+    const supabase = createSupabaseClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[v0] Auth state changed:", event, !!session)
+      setIsLoggedIn(!!session)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [mounted])
+
   const checkAuthStatus = async () => {
     try {
       const supabase = createSupabaseClient()
       const {
         data: { session },
       } = await supabase.auth.getSession()
+      console.log("[v0] Current session status:", !!session)
       setIsLoggedIn(!!session)
     } catch (error) {
       console.error("Failed to check auth status:", error)
