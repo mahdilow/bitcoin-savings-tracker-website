@@ -69,10 +69,22 @@ export default function DashboardPage() {
         const response = await fetch("/api/nobitex", {
           method: "POST",
         })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const data = await response.json()
-        setCurrentBTCPriceIRT(Number.parseFloat(data.stats["btc-rls"].latest) / 10)
+        
+        if (data && data.stats && data.stats["btc-rls"] && data.stats["btc-rls"].latest) {
+          setCurrentBTCPriceIRT(Number.parseFloat(data.stats["btc-rls"].latest) / 10)
+        } else {
+          console.warn("[v0] Invalid Nobitex API response structure:", data)
+          // Keep previous price if update fails
+        }
       } catch (error) {
-        console.error("Failed to fetch IRT price:", error)
+        console.error("[v0] Failed to fetch IRT price:", error)
+        // Continue with previous price, don't break the app
       }
     }
 

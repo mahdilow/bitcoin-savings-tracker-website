@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
-import { TrendingUp, TrendingDown, Bitcoin } from "lucide-react"
+import { TrendingUp, TrendingDown, Bitcoin } from 'lucide-react'
 import { formatCurrency, formatNumber } from "@/lib/utils"
 import type { BitcoinPrice } from "@/lib/types"
 import { apiCache, CACHE_DURATIONS } from "@/lib/api-cache" // Import apiCache and CACHE_DURATIONS
@@ -23,6 +23,7 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
     const fetchPrice = async () => {
       try {
         const cacheKey = "btc_price_simple"
+        
         const cached = apiCache.get<BitcoinPrice>(cacheKey)
 
         if (cached) {
@@ -35,10 +36,29 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
         const response = await fetch(
           "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true",
         )
+        
+        if (!response.ok) {
+          // If rate limited, try to use expired cache or show error
+          const expiredCache = apiCache.get<BitcoinPrice>(cacheKey, true) // Get even if expired
+          if (expiredCache) {
+            console.log("[v0] Using expired cache due to rate limit")
+            setPrice(expiredCache)
+            onPriceUpdate(expiredCache.usd)
+            setIsLoading(false)
+            return
+          }
+          throw new Error(`API returned status ${response.status}`)
+        }
+
         const data = await response.json()
+        
+        if (!data.bitcoin || typeof data.bitcoin.usd === 'undefined') {
+          throw new Error("Invalid API response structure")
+        }
+
         const newPrice = {
           usd: data.bitcoin.usd,
-          usd_24h_change: data.bitcoin.usd_24h_change,
+          usd_24h_change: data.bitcoin.usd_24h_change || 0,
         }
 
         apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
@@ -47,12 +67,13 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
         onPriceUpdate(newPrice.usd)
         setIsLoading(false)
 
-        // Trigger pulse animation
         setIsPulsing(true)
         setTimeout(() => setIsPulsing(false), 1000)
       } catch (error) {
         console.error("[v0] Failed to fetch Bitcoin price:", error)
-        setIsLoading(false)
+        if (!price) {
+          setIsLoading(false)
+        }
       }
     }
 

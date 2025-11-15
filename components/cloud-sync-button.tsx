@@ -112,23 +112,32 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
         throw new Error("User not authenticated")
       }
 
-      // Delete existing purchases for this user
-      await supabase.from("purchases").delete().eq("user_id", user.id)
+      console.log("[v0] Syncing purchases for user:", user.id)
 
-      // Insert all current purchases
+      // Delete existing purchases for this user
+      const { error: deleteError } = await supabase.from("purchases").delete().eq("user_id", user.id)
+      
+      if (deleteError) {
+        console.error("[v0] Delete error:", deleteError)
+        throw deleteError
+      }
+
       const purchasesToSync = purchases.map((p) => ({
         user_id: user.id,
         date: p.date,
-        btc_amount: p.btcAmount,
-        usd_price_at_purchase: p.usdPriceAtPurchase,
-        total_usd_spent: p.totalUsdSpent,
-        notes: p.notes,
+        amount_btc: p.btcAmount, // Changed from btc_amount
+        price_usd: p.usdPriceAtPurchase, // Changed from usd_price_at_purchase
+        // total_usd_spent removed as it's not in the schema
       }))
 
       if (purchasesToSync.length > 0) {
-        const { error } = await supabase.from("purchases").insert(purchasesToSync)
+        console.log("[v0] Inserting purchases:", purchasesToSync.length)
+        const { error: insertError } = await supabase.from("purchases").insert(purchasesToSync)
 
-        if (error) throw error
+        if (insertError) {
+          console.error("[v0] Insert error:", insertError)
+          throw insertError
+        }
       }
 
       // Mark as synced
@@ -138,8 +147,9 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
       alert("همگام‌سازی با موفقیت انجام شد!")
     } catch (error) {
-      console.error("Sync failed:", error)
-      alert("خطا در همگام‌سازی. لطفاً دوباره تلاش کنید.")
+      console.error("[v0] Sync failed:", error)
+      const errorMessage = error instanceof Error ? error.message : "خطای ناشناخته"
+      alert(`خطا در همگام‌سازی: ${errorMessage}\nلطفاً دوباره تلاش کنید.`)
     } finally {
       setIsSyncing(false)
     }

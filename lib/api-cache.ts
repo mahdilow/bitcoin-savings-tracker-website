@@ -37,12 +37,14 @@ class APICache {
     }
   }
 
-  get<T>(key: string): T | null {
+  get<T>(key: string, includeExpired = false): T | null {
     const entry = this.cache.get(key)
     if (!entry) return null
 
     const now = Date.now()
-    if (now - entry.timestamp > entry.expiresIn) {
+    const isExpired = now - entry.timestamp > entry.expiresIn
+    
+    if (isExpired && !includeExpired) {
       this.cache.delete(key)
       this.saveToStorage()
       return null
@@ -88,8 +90,8 @@ export const apiCache = new APICache()
 
 // Cache durations
 export const CACHE_DURATIONS = {
-  PRICE_TICKER: 60 * 1000, // 1 minute
-  MARKET_DATA: 5 * 60 * 1000, // 5 minutes
-  PRICE_HISTORY: 10 * 60 * 1000, // 10 minutes
-  NOBITEX: 60 * 1000, // 1 minute
+  PRICE_TICKER: 5 * 60 * 1000, // 5 minutes (increased from 1)
+  MARKET_DATA: 10 * 60 * 1000, // 10 minutes (increased from 5)
+  PRICE_HISTORY: 30 * 60 * 1000, // 30 minutes (increased from 10)
+  NOBITEX: 2 * 60 * 1000, // 2 minutes (increased from 1)
 }
