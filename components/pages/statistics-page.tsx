@@ -1,10 +1,26 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TrendingUp, TrendingDown, DollarSign, Activity, Target, Calendar, Award, PieChart, Zap } from "lucide-react"
-import { useTheme } from "next-themes"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Activity,
+  Target,
+  Calendar,
+  Award,
+  PieChart,
+  Zap,
+} from "lucide-react";
+import { useTheme } from "next-themes";
 import {
   Area,
   AreaChart,
@@ -18,99 +34,103 @@ import {
   Tooltip,
   CartesianGrid,
   Legend,
-} from "recharts"
-import { cn } from "@/lib/utils"
-import type { Purchase } from "@/lib/types"
-import { formatPersianNumber, toJalali } from "@/lib/utils"
-import { apiCache, CACHE_DURATIONS } from "@/lib/api-cache"
+} from "recharts";
+import { cn } from "@/lib/utils";
+import type { Purchase } from "@/lib/types";
+import { formatPersianNumber, toJalali } from "@/lib/utils";
+import { apiCache, CACHE_DURATIONS } from "@/lib/api-cache";
 
 interface StatisticsPageProps {
-  purchases: Purchase[]
-  currentBTCPrice: number
-  currentBTCPriceIRT: number
+  purchases: Purchase[];
+  currentBTCPrice: number;
+  currentBTCPriceIRT: number;
 }
 
 interface BitcoinMarketData {
-  price: number
-  marketCap: number
-  volume24h: number
-  priceChange24h: number
-  priceChange7d: number
-  priceChange30d: number
-  circulatingSupply: number
-  totalSupply: number
-  ath: number
-  atl: number
-  athDate: string
-  atlDate: string
-  dominance: number
+  price: number;
+  marketCap: number;
+  volume24h: number;
+  priceChange24h: number;
+  priceChange7d: number;
+  priceChange30d: number;
+  circulatingSupply: number;
+  totalSupply: number;
+  ath: number;
+  atl: number;
+  athDate: string;
+  atlDate: string;
+  dominance: number;
 }
 
 interface PriceHistoryData {
-  date: string
-  price: number
+  date: string;
+  price: number;
 }
 
-export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT }: StatisticsPageProps) {
-  const { theme } = useTheme()
-  const [marketData, setMarketData] = useState<BitcoinMarketData | null>(null)
-  const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([])
-  const [timeRange, setTimeRange] = useState<"7" | "30" | "90" | "365">("30")
-  const [isLoading, setIsLoading] = useState(true)
+export function StatisticsPage({
+  purchases,
+  currentBTCPrice,
+  currentBTCPriceIRT,
+}: StatisticsPageProps) {
+  const { theme } = useTheme();
+  const [marketData, setMarketData] = useState<BitcoinMarketData | null>(null);
+  const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([]);
+  const [timeRange, setTimeRange] = useState<"7" | "30" | "90" | "365">("30");
+  const [isLoading, setIsLoading] = useState(true);
   const [hoveredDay, setHoveredDay] = useState<{
-    date: string
-    dateJalali: string
-    count: number
-    purchases: Purchase[]
-    x: number
-    y: number
-  } | null>(null)
+    date: string;
+    dateJalali: string;
+    count: number;
+    purchases: Purchase[];
+    x: number;
+    y: number;
+  } | null>(null);
   const [chartColors, setChartColors] = useState({
     positive: "",
     negative: "",
     invested: "",
     grid: "",
     text: "",
-  })
+  });
 
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") return;
 
-    const style = getComputedStyle(document.documentElement)
+    const style = getComputedStyle(document.documentElement);
     setChartColors({
-      positive: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
+      positive: `rgb(${style.getPropertyValue("--primary").trim()})`,
       negative: `rgb(${style.getPropertyValue("--destructive").trim()})`,
-      invested: `rgb(${style.getPropertyValue("--primary").trim()})`,
+      invested: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
       grid: `rgb(${style.getPropertyValue("--border").trim()})`,
       text: `rgb(${style.getPropertyValue("--foreground").trim()})`,
-    })
-  }, [theme])
+    });
+  }, [theme]);
 
   // Fetch Bitcoin market data
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
-        setIsLoading(true)
-        const cacheKey = "btc_market_data"
-        const cached = apiCache.get<BitcoinMarketData>(cacheKey)
+        setIsLoading(true);
+        const cacheKey = "btc_market_data";
+        const cached = apiCache.get<BitcoinMarketData>(cacheKey);
 
         if (cached) {
-          setMarketData(cached)
-          setIsLoading(false)
-          return
+          setMarketData(cached);
+          setIsLoading(false);
+          return;
         }
 
         const response = await fetch(
-          "https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false",
-        )
-        const data = await response.json()
+          "https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false"
+        );
+        const data = await response.json();
 
-        const circulatingSupply = data.market_data.circulating_supply
-        const maxSupply = 21000000 // Bitcoin's max supply
-        const supplyPercentage = (circulatingSupply / maxSupply) * 100
+        const circulatingSupply = data.market_data.circulating_supply;
+        const maxSupply = 21000000; // Bitcoin's max supply
+        const supplyPercentage = (circulatingSupply / maxSupply) * 100;
 
-        const athDate = new Date(data.market_data.ath_date.usd)
-        const atlDate = new Date(data.market_data.atl_date.usd)
+        const athDate = new Date(data.market_data.ath_date.usd);
+        const atlDate = new Date(data.market_data.atl_date.usd);
 
         const marketDataResult = {
           price: data.market_data.current_price.usd,
@@ -126,53 +146,59 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           athDate: toJalali(athDate.toISOString()),
           atlDate: toJalali(atlDate.toISOString()),
           dominance: data.market_data.price_change_percentage_24h,
-        }
+        };
 
-        apiCache.set(cacheKey, marketDataResult, CACHE_DURATIONS.MARKET_DATA)
-        setMarketData(marketDataResult)
+        apiCache.set(cacheKey, marketDataResult, CACHE_DURATIONS.MARKET_DATA);
+        setMarketData(marketDataResult);
       } catch (error) {
-        console.error("Failed to fetch market data:", error)
+        console.error("Failed to fetch market data:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchMarketData()
-  }, [])
+    fetchMarketData();
+  }, []);
 
   // Fetch price history
   useEffect(() => {
     const fetchPriceHistory = async () => {
       try {
-        const cacheKey = `btc_price_history_${timeRange}`
-        const cached = apiCache.get<PriceHistoryData[]>(cacheKey)
+        const cacheKey = `btc_price_history_${timeRange}`;
+        const cached = apiCache.get<PriceHistoryData[]>(cacheKey);
 
         if (cached) {
-          setPriceHistory(cached)
-          return
+          setPriceHistory(cached);
+          return;
         }
 
         const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${timeRange}`,
-        )
-        const data = await response.json()
+          `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${timeRange}`
+        );
+        const data = await response.json();
 
-        const formattedData = data.prices.map(([timestamp, price]: [number, number]) => ({
-          date: new Date(timestamp).toLocaleDateString("fa-IR"),
-          price: Math.round(price),
-        }))
+        const formattedData = data.prices.map(
+          ([timestamp, price]: [number, number]) => ({
+            date: new Date(timestamp).toLocaleDateString("fa-IR"),
+            price: Math.round(price),
+          })
+        );
 
-        apiCache.set(cacheKey, formattedData, CACHE_DURATIONS.PRICE_HISTORY)
-        setPriceHistory(formattedData)
+        apiCache.set(cacheKey, formattedData, CACHE_DURATIONS.PRICE_HISTORY);
+        setPriceHistory(formattedData);
       } catch (error) {
-        console.error("Failed to fetch price history:", error)
+        console.error("Failed to fetch price history:", error);
       }
-    }
+    };
 
-    fetchPriceHistory()
-  }, [timeRange])
+    fetchPriceHistory();
+  }, [timeRange]);
 
-  const userStats = calculateUserStatistics(purchases, currentBTCPrice, priceHistory)
+  const userStats = calculateUserStatistics(
+    purchases,
+    currentBTCPrice,
+    priceHistory
+  );
 
   if (isLoading || !chartColors.positive) {
     return (
@@ -182,7 +208,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           <p className="text-muted-foreground">در حال بارگذاری اطلاعات...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -202,12 +228,15 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                ${formatPersianNumber(marketData?.price.toLocaleString() || "0")}
+                $
+                {formatPersianNumber(marketData?.price.toLocaleString() || "0")}
               </div>
               <div
                 className={cn(
                   "text-sm flex items-center gap-1 mt-1",
-                  (marketData?.priceChange24h || 0) >= 0 ? "text-success" : "text-destructive",
+                  (marketData?.priceChange24h || 0) >= 0
+                    ? "text-success"
+                    : "text-destructive"
                 )}
               >
                 {(marketData?.priceChange24h || 0) >= 0 ? (
@@ -215,7 +244,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 ) : (
                   <TrendingDown className="w-4 h-4" />
                 )}
-                {formatPersianNumber(Math.abs(marketData?.priceChange24h || 0).toFixed(2))}%
+                {formatPersianNumber(
+                  Math.abs(marketData?.priceChange24h || 0).toFixed(2)
+                )}
+                %
               </div>
             </CardContent>
           </Card>
@@ -226,9 +258,15 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold">
-                ${formatPersianNumber(((marketData?.marketCap || 0) / 1e12).toFixed(2))}T
+                $
+                {formatPersianNumber(
+                  ((marketData?.marketCap || 0) / 1e12).toFixed(2)
+                )}
+                T
               </div>
-              <div className="text-xs text-muted-foreground mt-1">تریلیون دلار</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                تریلیون دلار
+              </div>
             </CardContent>
           </Card>
 
@@ -238,9 +276,15 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </CardHeader>
             <CardContent>
               <div className="text-xl font-bold">
-                ${formatPersianNumber(((marketData?.volume24h || 0) / 1e9).toFixed(2))}B
+                $
+                {formatPersianNumber(
+                  ((marketData?.volume24h || 0) / 1e9).toFixed(2)
+                )}
+                B
               </div>
-              <div className="text-xs text-muted-foreground mt-1">میلیارد دلار</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                میلیارد دلار
+              </div>
             </CardContent>
           </Card>
 
@@ -252,7 +296,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <div
                 className={cn(
                   "text-xl font-bold",
-                  (marketData?.dominance || 0) >= 0 ? "text-success" : "text-destructive",
+                  (marketData?.dominance || 0) >= 0
+                    ? "text-success"
+                    : "text-destructive"
                 )}
               >
                 <div className="flex items-center gap-1">
@@ -261,7 +307,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   ) : (
                     <TrendingDown className="w-5 h-5" />
                   )}
-                  {formatPersianNumber(Math.abs(marketData?.dominance || 0).toFixed(2))}%
+                  {formatPersianNumber(
+                    Math.abs(marketData?.dominance || 0).toFixed(2)
+                  )}
+                  %
                 </div>
               </div>
               <div className="text-xs text-muted-foreground mt-1">از دیروز</div>
@@ -280,14 +329,18 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   {timeRange === "7"
                     ? "۷ روز"
                     : timeRange === "30"
-                      ? "۳۰ روز"
-                      : timeRange === "90"
-                        ? "۹۰ روز"
-                        : "یک سال"}{" "}
+                    ? "۳۰ روز"
+                    : timeRange === "90"
+                    ? "۹۰ روز"
+                    : "یک سال"}{" "}
                   گذشته
                 </CardDescription>
               </div>
-              <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="w-auto">
+              <Tabs
+                value={timeRange}
+                onValueChange={(v) => setTimeRange(v as any)}
+                className="w-auto"
+              >
                 <TabsList className="grid grid-cols-4 w-full md:w-[280px]">
                   <TabsTrigger value="7">۷ روز</TabsTrigger>
                   <TabsTrigger value="30">۳۰ روز</TabsTrigger>
@@ -304,7 +357,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <div>
                   <p className="text-sm text-muted-foreground">قیمت فعلی</p>
                   <p className="text-2xl font-bold text-primary">
-                    ${formatPersianNumber(marketData?.price.toLocaleString() || "0")}
+                    $
+                    {formatPersianNumber(
+                      marketData?.price.toLocaleString() || "0"
+                    )}
                   </p>
                 </div>
                 <div className="text-left">
@@ -313,10 +369,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     {timeRange === "7"
                       ? "۷ روز"
                       : timeRange === "30"
-                        ? "۳۰ روز"
-                        : timeRange === "90"
-                          ? "۹۰ روز"
-                          : "یک سال"}
+                      ? "۳۰ روز"
+                      : timeRange === "90"
+                      ? "۹۰ روز"
+                      : "یک سال"}
                   </p>
                   <div
                     className={cn(
@@ -324,17 +380,17 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       (timeRange === "7"
                         ? marketData?.priceChange7d
                         : timeRange === "30"
-                          ? marketData?.priceChange30d
-                          : marketData?.priceChange30d || 0) >= 0
+                        ? marketData?.priceChange30d
+                        : marketData?.priceChange30d || 0) >= 0
                         ? "text-success"
-                        : "text-destructive",
+                        : "text-destructive"
                     )}
                   >
                     {(timeRange === "7"
                       ? marketData?.priceChange7d
                       : timeRange === "30"
-                        ? marketData?.priceChange30d
-                        : marketData?.priceChange30d || 0) >= 0 ? (
+                      ? marketData?.priceChange30d
+                      : marketData?.priceChange30d || 0) >= 0 ? (
                       <TrendingUp className="w-5 h-5" />
                     ) : (
                       <TrendingDown className="w-5 h-5" />
@@ -344,9 +400,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         timeRange === "7"
                           ? marketData?.priceChange7d || 0
                           : timeRange === "30"
-                            ? marketData?.priceChange30d || 0
-                            : marketData?.priceChange30d || 0,
-                      ).toFixed(2),
+                          ? marketData?.priceChange30d || 0
+                          : marketData?.priceChange30d || 0
+                      ).toFixed(2)
                     )}
                     %
                   </div>
@@ -356,12 +412,33 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               {/* Chart */}
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
                 <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={priceHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <AreaChart
+                    data={priceHistory}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.4} />
-                        <stop offset="50%" stopColor={chartColors.positive} stopOpacity={0.2} />
-                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0} />
+                      <linearGradient
+                        id="priceGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.4}
+                        />
+                        <stop
+                          offset="50%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.2}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -386,21 +463,26 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickLine={false}
                       axisLine={false}
                       dx={-10}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}k`
+                      }
                       domain={["dataMin - 1000", "dataMax + 1000"]}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null
-                        const data = payload[0].payload
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
                         return (
                           <div className="bg-card border border-border rounded-lg shadow-lg p-3 space-y-1">
-                            <p className="text-xs text-muted-foreground">{data.date}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {data.date}
+                            </p>
                             <p className="text-lg font-bold text-success">
-                              ${formatPersianNumber(data.price.toLocaleString())}
+                              $
+                              {formatPersianNumber(data.price.toLocaleString())}
                             </p>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Area
@@ -454,7 +536,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <CardHeader>
               <CardDescription>عرضه در گردش</CardDescription>
               <CardTitle className="text-2xl">
-                {formatPersianNumber((marketData?.circulatingSupply || 0).toFixed(0))} BTC
+                {formatPersianNumber(
+                  (marketData?.circulatingSupply || 0).toFixed(0)
+                )}{" "}
+                BTC
               </CardTitle>
             </CardHeader>
           </Card>
@@ -477,18 +562,29 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardHeader>
               <CardContent>
                 <div
-                  className={cn("text-3xl font-bold", userStats.totalReturn >= 0 ? "text-success" : "text-destructive")}
+                  className={cn(
+                    "text-3xl font-bold",
+                    userStats.totalReturn >= 0
+                      ? "text-success"
+                      : "text-destructive"
+                  )}
                 >
-                  ${formatPersianNumber(Math.abs(userStats.totalReturn).toLocaleString())}
+                  $
+                  {formatPersianNumber(
+                    Math.abs(userStats.totalReturn).toLocaleString()
+                  )}
                 </div>
                 <div
                   className={cn(
                     "text-lg font-semibold mt-2",
-                    userStats.totalReturnPercent >= 0 ? "text-success" : "text-destructive",
+                    userStats.totalReturnPercent >= 0
+                      ? "text-success"
+                      : "text-destructive"
                   )}
                 >
                   {userStats.totalReturnPercent >= 0 ? "+" : ""}
-                  {formatPersianNumber(userStats.totalReturnPercent.toFixed(2))}%
+                  {formatPersianNumber(userStats.totalReturnPercent.toFixed(2))}
+                  %
                 </div>
               </CardContent>
             </Card>
@@ -499,7 +595,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <CardDescription>نرخ رشد سالانه ترکیبی</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className={cn("text-3xl font-bold", userStats.cagr >= 0 ? "text-chart-3" : "text-destructive")}>
+                <div
+                  className={cn(
+                    "text-3xl font-bold",
+                    userStats.cagr >= 0 ? "text-chart-3" : "text-destructive"
+                  )}
+                >
                   {formatPersianNumber(userStats.cagr.toFixed(2))}%
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
@@ -521,8 +622,8 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   {userStats.correlationScore > 0.8
                     ? "همبستگی بالا"
                     : userStats.correlationScore > 0.5
-                      ? "همبستگی متوسط"
-                      : "همبستگی پایین"}
+                    ? "همبستگی متوسط"
+                    : "همبستگی پایین"}
                 </div>
               </CardContent>
             </Card>
@@ -531,16 +632,35 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           <Card>
             <CardHeader>
               <CardTitle>مقایسه پرتفوی با قیمت BTC</CardTitle>
-              <CardDescription>عملکرد سرمایه‌گذاری شما در مقابل قیمت بیت‌کوین</CardDescription>
+              <CardDescription>
+                عملکرد سرمایه‌گذاری شما در مقابل قیمت بیت‌کوین
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
                 <ResponsiveContainer width="100%" height={350}>
-                  <ComposedChart data={userStats.portfolioVsBTC} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <ComposedChart
+                    data={userStats.portfolioVsBTC}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="investedGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.invested} stopOpacity={0.4} />
-                        <stop offset="100%" stopColor={chartColors.invested} stopOpacity={0} />
+                      <linearGradient
+                        id="investedGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.invested}
+                          stopOpacity={0.4}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.invested}
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -564,7 +684,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickLine={false}
                       axisLine={false}
                       dx={-10}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}k`
+                      }
                     />
                     <YAxis
                       yAxisId="right"
@@ -574,30 +696,40 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickLine={false}
                       axisLine={false}
                       dx={10}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}k`
+                      }
                     />
                     <Tooltip
                       content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null
+                        if (!active || !payload || !payload.length) return null;
                         return (
                           <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 space-y-2">
-                            <p className="text-xs text-muted-foreground">{payload[0].payload.date}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {payload[0].payload.date}
+                            </p>
                             <div className="space-y-1">
                               <div className="flex items-center justify-between gap-4">
-                                <span className="text-xs">ارزش پرتفوی:</span>
+                                <span className="text-xs">قیمت بیتکوین</span>
                                 <span className="text-sm font-bold text-primary">
-                                  ${formatPersianNumber(payload[0].value?.toLocaleString() || "0")}
+                                  $
+                                  {formatPersianNumber(
+                                    payload[1].value?.toLocaleString() || "0"
+                                  )}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span className="text-xs">قیمت BTC:</span>
+                                <span className="text-xs">ارزش پرتفوی شما</span>
                                 <span className="text-sm font-bold text-success">
-                                  ${formatPersianNumber(payload[1]?.value?.toLocaleString() || "0")}
+                                  $
+                                  {formatPersianNumber(
+                                    payload[0]?.value?.toLocaleString() || "0"
+                                  )}
                                 </span>
                               </div>
                             </div>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Legend />
@@ -631,47 +763,74 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <Zap className="w-5 h-5 text-warning" />
                 <CardTitle>مقایسه با استراتژی خرید و نگهداری</CardTitle>
               </div>
-              <CardDescription>اگر در اولین خرید تمام سرمایه را یکجا سرمایه‌گذاری می‌کردید</CardDescription>
+              <CardDescription>
+                اگر در اولین خرید تمام سرمایه را یکجا سرمایه‌گذاری می‌کردید
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">استراتژی DCA (فعلی شما)</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    استراتژی DCA (فعلی شما)
+                  </p>
                   <div className="text-2xl font-bold text-primary mb-1">
-                    ${formatPersianNumber(userStats.currentPortfolioValue.toLocaleString())}
+                    $
+                    {formatPersianNumber(
+                      userStats.currentPortfolioValue.toLocaleString()
+                    )}
                   </div>
                   <div
                     className={cn(
                       "text-sm font-semibold",
-                      userStats.totalReturnPercent >= 0 ? "text-success" : "text-destructive",
+                      userStats.totalReturnPercent >= 0
+                        ? "text-success"
+                        : "text-destructive"
                     )}
                   >
                     {userStats.totalReturnPercent >= 0 ? "+" : ""}
-                    {formatPersianNumber(userStats.totalReturnPercent.toFixed(2))}% بازده
+                    {formatPersianNumber(
+                      userStats.totalReturnPercent.toFixed(2)
+                    )}
+                    % بازده
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">خرید یکجا (بنچمارک)</p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    خرید یکجا (بنچمارک)
+                  </p>
                   <div className="text-2xl font-bold text-warning mb-1">
-                    ${formatPersianNumber(userStats.holdStrategyValue.toLocaleString())}
+                    $
+                    {formatPersianNumber(
+                      userStats.holdStrategyValue.toLocaleString()
+                    )}
                   </div>
                   <div
                     className={cn(
                       "text-sm font-semibold",
-                      userStats.holdStrategyReturn >= 0 ? "text-success" : "text-destructive",
+                      userStats.holdStrategyReturn >= 0
+                        ? "text-success"
+                        : "text-destructive"
                     )}
                   >
                     {userStats.holdStrategyReturn >= 0 ? "+" : ""}
-                    {formatPersianNumber(userStats.holdStrategyReturn.toFixed(2))}% بازده
+                    {formatPersianNumber(
+                      userStats.holdStrategyReturn.toFixed(2)
+                    )}
+                    % بازده
                   </div>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-background/50 rounded-lg">
                 <p className="text-sm">
-                  {userStats.totalReturnPercent > userStats.holdStrategyReturn ? (
-                    <span className="text-success font-semibold">✓ استراتژی DCA شما بهتر عمل کرده است!</span>
+                  {userStats.totalReturnPercent >
+                  userStats.holdStrategyReturn ? (
+                    <span className="text-success font-semibold">
+                      ✓ استراتژی DCA شما بهتر عمل کرده است!
+                    </span>
                   ) : (
-                    <span className="text-warning font-semibold">→ خرید یکجا بازده بهتری داشت</span>
+                    <span className="text-warning font-semibold">
+                      → خرید یکجا بازده بهتری داشت
+                    </span>
                   )}
                 </p>
               </div>
@@ -687,7 +846,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{formatPersianNumber(userStats.totalPurchases)}</div>
+                <div className="text-xl font-bold">
+                  {formatPersianNumber(userStats.totalPurchases)}
+                </div>
                 <div className="text-xs text-muted-foreground mt-1">تراکنش</div>
               </CardContent>
             </Card>
@@ -701,9 +862,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-bold">
-                  ${formatPersianNumber(userStats.averagePurchaseSize.toLocaleString())}
+                  $
+                  {formatPersianNumber(
+                    userStats.averagePurchaseSize.toLocaleString()
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">هر تراکنش</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  هر تراکنش
+                </div>
               </CardContent>
             </Card>
 
@@ -715,8 +881,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{formatPersianNumber(userStats.purchaseFrequency.toFixed(1))}</div>
-                <div className="text-xs text-muted-foreground mt-1">روز بین خریدها</div>
+                <div className="text-xl font-bold">
+                  {formatPersianNumber(userStats.purchaseFrequency.toFixed(1))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  روز بین خریدها
+                </div>
               </CardContent>
             </Card>
 
@@ -728,8 +898,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{formatPersianNumber(userStats.cumulativeBTC.toFixed(8))}</div>
-                <div className="text-xs text-muted-foreground mt-1">بیت‌کوین</div>
+                <div className="text-xl font-bold">
+                  {formatPersianNumber(userStats.cumulativeBTC.toFixed(8))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  بیت‌کوین
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -754,19 +928,20 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                               day.count === 1 && "bg-primary/30",
                               day.count === 2 && "bg-primary/50",
                               day.count === 3 && "bg-primary/70",
-                              day.count >= 4 && "bg-primary",
+                              day.count >= 4 && "bg-primary"
                             )}
                             onMouseEnter={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect()
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
                               setHoveredDay({
                                 ...day,
                                 x: rect.left + rect.width / 2,
                                 y: rect.top,
-                              })
+                              });
                             }}
                             onMouseLeave={() => setHoveredDay(null)}
                           />
-                        )
+                        );
                       })}
                     </div>
                   ))}
@@ -783,37 +958,53 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   >
                     <div className="bg-popover text-popover-foreground border border-border rounded-lg shadow-xl p-3 space-y-2 min-w-[180px] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/50">
-                        <p className="text-xs text-muted-foreground font-medium">تاریخ</p>
-                        <p className="text-xs font-semibold">{hoveredDay.dateJalali}</p>
+                        <p className="text-xs text-muted-foreground font-medium">
+                          تاریخ
+                        </p>
+                        <p className="text-xs font-semibold">
+                          {hoveredDay.dateJalali}
+                        </p>
                       </div>
 
                       {hoveredDay.count === 0 ? (
                         <div className="py-2">
-                          <p className="text-sm text-muted-foreground text-center">خریدی انجام نشده</p>
+                          <p className="text-sm text-muted-foreground text-center">
+                            خریدی انجام نشده
+                          </p>
                         </div>
                       ) : (
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-4">
-                            <p className="text-xs text-muted-foreground">تعداد خرید</p>
+                            <p className="text-xs text-muted-foreground">
+                              تعداد خرید
+                            </p>
                             <p className="text-sm font-semibold text-primary">
                               {formatPersianNumber(hoveredDay.count)} خرید
                             </p>
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <p className="text-xs text-muted-foreground">مجموع BTC</p>
+                            <p className="text-xs text-muted-foreground">
+                              مجموع BTC
+                            </p>
                             <p className="text-sm font-semibold">
                               {formatPersianNumber(
-                                hoveredDay.purchases.reduce((sum, p) => sum + p.btcAmount, 0).toFixed(8),
+                                hoveredDay.purchases
+                                  .reduce((sum, p) => sum + p.btcAmount, 0)
+                                  .toFixed(8)
                               )}{" "}
                               BTC
                             </p>
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <p className="text-xs text-muted-foreground">مجموع سرمایه</p>
+                            <p className="text-xs text-muted-foreground">
+                              مجموع سرمایه
+                            </p>
                             <p className="text-sm font-semibold text-success">
                               $
                               {formatPersianNumber(
-                                hoveredDay.purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0).toLocaleString(),
+                                hoveredDay.purchases
+                                  .reduce((sum, p) => sum + p.totalUsdSpent, 0)
+                                  .toLocaleString()
                               )}
                             </p>
                           </div>
@@ -850,15 +1041,46 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <CardContent>
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={userStats.monthlyPerformance} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={userStats.monthlyPerformance}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0.4} />
+                      <linearGradient
+                        id="positiveGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.4}
+                        />
                       </linearGradient>
-                      <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.negative} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={chartColors.negative} stopOpacity={0.4} />
+                      <linearGradient
+                        id="negativeGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.negative}
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.negative}
+                          stopOpacity={0.4}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -886,50 +1108,82 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         value: "سود/زیان (%)",
                         angle: -90,
                         position: "insideLeft",
-                        style: { textAnchor: "middle", fill: chartColors.text, fontSize: 12 },
+                        style: {
+                          textAnchor: "middle",
+                          fill: chartColors.text,
+                          fontSize: 12,
+                        },
                       }}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null
-                        const data = payload[0].payload
-                        const isProfit = data.profitLossPercent >= 0
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        const isProfit = data.profitLossPercent >= 0;
                         return (
                           <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 space-y-2">
-                            <p className="text-xs text-muted-foreground font-medium">{data.month}</p>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {data.month}
+                            </p>
                             <div className="flex items-center gap-2">
                               {isProfit ? (
                                 <TrendingUp className="w-4 h-4 text-success" />
                               ) : (
                                 <TrendingDown className="w-4 h-4 text-destructive" />
                               )}
-                              <span className={cn("text-xl font-bold", isProfit ? "text-success" : "text-destructive")}>
+                              <span
+                                className={cn(
+                                  "text-xl font-bold",
+                                  isProfit ? "text-success" : "text-destructive"
+                                )}
+                              >
                                 {isProfit ? "+" : ""}
-                                {formatPersianNumber(Math.abs(data.profitLossPercent).toFixed(2))}%
+                                {formatPersianNumber(
+                                  Math.abs(data.profitLossPercent).toFixed(2)
+                                )}
+                                %
                               </span>
                             </div>
                             <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/50">
                               <div className="flex justify-between gap-4">
                                 <span>سرمایه‌گذاری:</span>
                                 <span className="font-medium">
-                                  ${formatPersianNumber(data.invested?.toLocaleString() || "0")}
+                                  $
+                                  {formatPersianNumber(
+                                    data.invested?.toLocaleString() || "0"
+                                  )}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
                                 <span>ارزش فعلی:</span>
                                 <span className="font-medium">
-                                  ${formatPersianNumber(data.currentValue?.toLocaleString() || "0")}
+                                  $
+                                  {formatPersianNumber(
+                                    data.currentValue?.toLocaleString() || "0"
+                                  )}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4 pt-1 border-t border-border/30">
-                                <span className="font-medium">{isProfit ? "سود" : "زیان"} مطلق:</span>
-                                <span className={cn("font-semibold", isProfit ? "text-success" : "text-destructive")}>
-                                  {isProfit ? "+" : ""}${formatPersianNumber(Math.abs(data.profitLoss).toFixed(2))}
+                                <span className="font-medium">
+                                  {isProfit ? "سود" : "زیان"} مطلق:
+                                </span>
+                                <span
+                                  className={cn(
+                                    "font-semibold",
+                                    isProfit
+                                      ? "text-success"
+                                      : "text-destructive"
+                                  )}
+                                >
+                                  {isProfit ? "+" : ""}$
+                                  {formatPersianNumber(
+                                    Math.abs(data.profitLoss).toFixed(2)
+                                  )}
                                 </span>
                               </div>
                             </div>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Bar
@@ -937,15 +1191,27 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       radius={[6, 6, 0, 0]}
                       maxBarSize={60}
                       shape={(props: any) => {
-                        const { x, y, width, height, payload } = props
-                        if (!payload || payload.profitLossPercent === undefined) return null
-                        const value = payload.profitLossPercent
-                        const fill = value >= 0 ? "url(#positiveGradient)" : "url(#negativeGradient)"
-                        const adjustedY = value >= 0 ? y : y + height
-                        const adjustedHeight = Math.abs(height)
+                        const { x, y, width, height, payload } = props;
+                        if (!payload || payload.profitLossPercent === undefined)
+                          return null;
+                        const value = payload.profitLossPercent;
+                        const fill =
+                          value >= 0
+                            ? "url(#positiveGradient)"
+                            : "url(#negativeGradient)";
+                        const adjustedY = value >= 0 ? y : y + height;
+                        const adjustedHeight = Math.abs(height);
                         return (
-                          <rect x={x} y={adjustedY} width={width} height={adjustedHeight} fill={fill} rx={6} ry={6} />
-                        )
+                          <rect
+                            x={x}
+                            y={adjustedY}
+                            width={width}
+                            height={adjustedHeight}
+                            fill={fill}
+                            rx={6}
+                            ry={6}
+                          />
+                        );
                       }}
                     />
                   </BarChart>
@@ -963,12 +1229,22 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-success mb-1">{userStats.bestMonth.month}</div>
+                <div className="text-2xl font-bold text-success mb-1">
+                  {userStats.bestMonth.month}
+                </div>
                 <div className="text-xl font-semibold text-success">
-                  +{formatPersianNumber(userStats.bestMonth.profitLossPercent.toFixed(2))}%
+                  +
+                  {formatPersianNumber(
+                    userStats.bestMonth.profitLossPercent.toFixed(2)
+                  )}
+                  %
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
-                  (+${formatPersianNumber(userStats.bestMonth.profitLoss.toFixed(2))})
+                  (+$
+                  {formatPersianNumber(
+                    userStats.bestMonth.profitLoss.toFixed(2)
+                  )}
+                  )
                 </div>
               </CardContent>
             </Card>
@@ -981,12 +1257,21 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive mb-1">{userStats.worstMonth.month}</div>
+                <div className="text-2xl font-bold text-destructive mb-1">
+                  {userStats.worstMonth.month}
+                </div>
                 <div className="text-xl font-semibold text-destructive">
-                  {formatPersianNumber(userStats.worstMonth.profitLossPercent.toFixed(2))}%
+                  {formatPersianNumber(
+                    userStats.worstMonth.profitLossPercent.toFixed(2)
+                  )}
+                  %
                 </div>
                 <div className="text-sm text-muted-foreground mt-2">
-                  (${formatPersianNumber(Math.abs(userStats.worstMonth.profitLoss).toFixed(2))})
+                  ($
+                  {formatPersianNumber(
+                    Math.abs(userStats.worstMonth.profitLoss).toFixed(2)
+                  )}
+                  )
                 </div>
               </CardContent>
             </Card>
@@ -1002,9 +1287,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-bold">
-                  ${formatPersianNumber(userStats.averagePurchasePrice.toLocaleString())}
+                  $
+                  {formatPersianNumber(
+                    userStats.averagePurchasePrice.toLocaleString()
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">قیمت میانگین</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  قیمت میانگین
+                </div>
               </CardContent>
             </Card>
 
@@ -1017,9 +1307,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-bold text-success">
-                  ${formatPersianNumber(userStats.bestPurchasePrice.toLocaleString())}
+                  $
+                  {formatPersianNumber(
+                    userStats.bestPurchasePrice.toLocaleString()
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">کمترین قیمت</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  کمترین قیمت
+                </div>
               </CardContent>
             </Card>
 
@@ -1032,9 +1327,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-bold text-destructive">
-                  ${formatPersianNumber(userStats.worstPurchasePrice.toLocaleString())}
+                  $
+                  {formatPersianNumber(
+                    userStats.worstPurchasePrice.toLocaleString()
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">بیشترین قیمت</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  بیشترین قیمت
+                </div>
               </CardContent>
             </Card>
 
@@ -1046,7 +1346,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{formatPersianNumber(purchases.length)}</div>
+                <div className="text-xl font-bold">
+                  {formatPersianNumber(purchases.length)}
+                </div>
                 <div className="text-xs text-muted-foreground mt-1">تراکنش</div>
               </CardContent>
             </Card>
@@ -1061,10 +1363,17 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className={cn("text-3xl font-bold", userStats.roi >= 0 ? "text-success" : "text-destructive")}>
+                    <div
+                      className={cn(
+                        "text-3xl font-bold",
+                        userStats.roi >= 0 ? "text-success" : "text-destructive"
+                      )}
+                    >
                       {formatPersianNumber(userStats.roi.toFixed(2))}%
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">درصد سود کل</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      درصد سود کل
+                    </p>
                   </div>
                   {userStats.roi >= 0 ? (
                     <TrendingUp className="w-12 h-12 text-success opacity-50" />
@@ -1083,10 +1392,15 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-3xl font-bold text-chart-3">
-                      ${formatPersianNumber(userStats.breakEvenPrice.toLocaleString())}
+                      $
+                      {formatPersianNumber(
+                        userStats.breakEvenPrice.toLocaleString()
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {currentBTCPrice >= userStats.breakEvenPrice ? "در سود هستید" : "در ضرر هستید"}
+                      {currentBTCPrice >= userStats.breakEvenPrice
+                        ? "در سود هستید"
+                        : "در ضرر هستید"}
                     </p>
                   </div>
                   <DollarSign className="w-12 h-12 text-chart-3 opacity-50" />
@@ -1099,20 +1413,53 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
           <Card>
             <CardHeader>
               <CardTitle>تحلیل خریدها</CardTitle>
-              <CardDescription>سود/زیان هر خرید نسبت به قیمت فعلی</CardDescription>
+              <CardDescription>
+                سود/زیان هر خرید نسبت به قیمت فعلی
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={userStats.purchaseAnalysis} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={userStats.purchaseAnalysis}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.positive} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={chartColors.positive} stopOpacity={0.4} />
+                      <linearGradient
+                        id="positiveGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.positive}
+                          stopOpacity={0.4}
+                        />
                       </linearGradient>
-                      <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.negative} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={chartColors.negative} stopOpacity={0.4} />
+                      <linearGradient
+                        id="negativeGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.negative}
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.negative}
+                          stopOpacity={0.4}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -1140,47 +1487,75 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))", opacity: 0.1 }}
                       content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null
-                        const data = payload[0].payload
-                        const isProfit = data.profitLossPercent >= 0
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        const isProfit = data.profitLossPercent >= 0;
                         return (
                           <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 space-y-2 min-w-[200px]">
                             <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/50">
-                              <p className="text-xs text-muted-foreground font-medium">تاریخ خرید</p>
-                              <p className="text-xs font-semibold">{data.date}</p>
+                              <p className="text-xs text-muted-foreground font-medium">
+                                تاریخ خرید
+                              </p>
+                              <p className="text-xs font-semibold">
+                                {data.date}
+                              </p>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex items-center justify-between gap-4">
-                                <p className="text-xs text-muted-foreground">قیمت خرید</p>
+                                <p className="text-xs text-muted-foreground">
+                                  قیمت خرید
+                                </p>
                                 <p className="text-sm font-semibold">
-                                  ${formatPersianNumber(data.purchasePrice.toLocaleString())}
+                                  $
+                                  {formatPersianNumber(
+                                    data.purchasePrice.toLocaleString()
+                                  )}
                                 </p>
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <p className="text-xs text-muted-foreground">قیمت فعلی</p>
+                                <p className="text-xs text-muted-foreground">
+                                  قیمت فعلی
+                                </p>
                                 <p className="text-sm font-semibold">
-                                  ${formatPersianNumber(currentBTCPrice.toLocaleString())}
+                                  $
+                                  {formatPersianNumber(
+                                    currentBTCPrice.toLocaleString()
+                                  )}
                                 </p>
                               </div>
                             </div>
                             <div className="pt-2 border-t border-border/50">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-xs text-muted-foreground font-medium">{isProfit ? "سود" : "زیان"}</p>
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  {isProfit ? "سود" : "زیان"}
+                                </p>
                                 <div className="flex items-center gap-1.5">
                                   {isProfit ? (
                                     <TrendingUp className="w-4 h-4 text-success" />
                                   ) : (
                                     <TrendingDown className="w-4 h-4 text-destructive" />
                                   )}
-                                  <p className={cn("text-lg font-bold", isProfit ? "text-success" : "text-destructive")}>
+                                  <p
+                                    className={cn(
+                                      "text-lg font-bold",
+                                      isProfit
+                                        ? "text-success"
+                                        : "text-destructive"
+                                    )}
+                                  >
                                     {isProfit ? "+" : ""}
-                                    {formatPersianNumber(Math.abs(data.profitLossPercent).toFixed(2))}%
+                                    {formatPersianNumber(
+                                      Math.abs(data.profitLossPercent).toFixed(
+                                        2
+                                      )
+                                    )}
+                                    %
                                   </p>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        )
+                        );
                       }}
                     />
                     <Bar
@@ -1188,20 +1563,34 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       radius={[6, 6, 0, 0]}
                       maxBarSize={60}
                       shape={(props: any) => {
-                        const { x, y, width, height, payload } = props
-                        if (!payload || payload.profitLossPercent === undefined) {
-                          return null
+                        const { x, y, width, height, payload } = props;
+                        if (
+                          !payload ||
+                          payload.profitLossPercent === undefined
+                        ) {
+                          return null;
                         }
-                        const value = payload.profitLossPercent
-                        const fill = value >= 0 ? "url(#positiveGradient)" : "url(#negativeGradient)"
+                        const value = payload.profitLossPercent;
+                        const fill =
+                          value >= 0
+                            ? "url(#positiveGradient)"
+                            : "url(#negativeGradient)";
 
                         // We need to adjust y to start from the 0 line and make height positive
-                        const adjustedY = value >= 0 ? y : y + height
-                        const adjustedHeight = Math.abs(height)
+                        const adjustedY = value >= 0 ? y : y + height;
+                        const adjustedHeight = Math.abs(height);
 
                         return (
-                          <rect x={x} y={adjustedY} width={width} height={adjustedHeight} fill={fill} rx={6} ry={6} />
-                        )
+                          <rect
+                            x={x}
+                            y={adjustedY}
+                            width={width}
+                            height={adjustedHeight}
+                            fill={fill}
+                            rx={6}
+                            ry={6}
+                          />
+                        );
                       }}
                     />
                   </BarChart>
@@ -1219,11 +1608,28 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             <CardContent>
               <div className="bg-background/50 rounded-lg p-4 border border-border/50">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={userStats.monthlyInvestment} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={userStats.monthlyInvestment}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="investedGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartColors.invested} stopOpacity={0.9} />
-                        <stop offset="100%" stopColor={chartColors.invested} stopOpacity={0.4} />
+                      <linearGradient
+                        id="investedGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColors.invested}
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColors.invested}
+                          stopOpacity={0.4}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -1246,30 +1652,46 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickLine={false}
                       axisLine={false}
                       dx={-10}
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}k`
+                      }
                     />
                     <Tooltip
                       cursor={{ fill: "hsl(var(--muted))", opacity: 0.1 }}
                       content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null
-                        const data = payload[0].payload
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
                         return (
                           <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl p-4 space-y-2 min-w-[180px]">
                             <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/50">
-                              <p className="text-xs text-muted-foreground font-medium">ماه</p>
-                              <p className="text-xs font-semibold">{data.month}</p>
+                              <p className="text-xs text-muted-foreground font-medium">
+                                ماه
+                              </p>
+                              <p className="text-xs font-semibold">
+                                {data.month}
+                              </p>
                             </div>
                             <div className="pt-1">
-                              <p className="text-xs text-muted-foreground mb-1">مجموع سرمایه‌گذاری</p>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                مجموع سرمایه‌گذاری
+                              </p>
                               <p className="text-xl font-bold text-primary">
-                                ${formatPersianNumber(data.amount.toLocaleString())}
+                                $
+                                {formatPersianNumber(
+                                  data.amount.toLocaleString()
+                                )}
                               </p>
                             </div>
                           </div>
-                        )
+                        );
                       }}
                     />
-                    <Bar dataKey="amount" fill="url(#investedGradient)" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                    <Bar
+                      dataKey="amount"
+                      fill="url(#investedGradient)"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={60}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1278,10 +1700,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
         </div>
       )}
     </div>
-  )
+  );
 }
 
-function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number, priceHistory: PriceHistoryData[]) {
+function calculateUserStatistics(
+  purchases: Purchase[],
+  currentBTCPrice: number,
+  priceHistory: PriceHistoryData[]
+) {
   if (purchases.length === 0) {
     return {
       averagePurchasePrice: 0,
@@ -1306,114 +1732,164 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
       cumulativeBTC: 0,
       activityHeatmap: [],
       monthlyPerformance: [],
-      bestMonth: { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
-      worstMonth: { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
-    }
+      bestMonth: {
+        month: "",
+        profitLossPercent: 0,
+        profitLoss: 0,
+        invested: 0,
+        currentValue: 0,
+        btc: 0,
+      },
+      worstMonth: {
+        month: "",
+        profitLossPercent: 0,
+        profitLoss: 0,
+        invested: 0,
+        currentValue: 0,
+        btc: 0,
+      },
+    };
   }
 
-  const totalInvested = purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0)
-  const totalBTC = purchases.reduce((sum, p) => sum + p.btcAmount, 0)
-  const currentValue = totalBTC * currentBTCPrice
-  const averagePurchasePrice = totalInvested / totalBTC
+  const totalInvested = purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0);
+  const totalBTC = purchases.reduce((sum, p) => sum + p.btcAmount, 0);
+  const currentValue = totalBTC * currentBTCPrice;
+  const averagePurchasePrice = totalInvested / totalBTC;
 
-  const prices = purchases.map((p) => p.usdPriceAtPurchase)
-  const bestPurchasePrice = Math.min(...prices)
-  const worstPurchasePrice = Math.max(...prices)
+  const prices = purchases.map((p) => p.usdPriceAtPurchase);
+  const bestPurchasePrice = Math.min(...prices);
+  const worstPurchasePrice = Math.max(...prices);
 
-  const totalReturn = currentValue - totalInvested
-  const totalReturnPercent = (totalReturn / totalInvested) * 100
-  const roi = totalReturnPercent
-  const breakEvenPrice = averagePurchasePrice
+  const totalReturn = currentValue - totalInvested;
+  const totalReturnPercent = (totalReturn / totalInvested) * 100;
+  const roi = totalReturnPercent;
+  const breakEvenPrice = averagePurchasePrice;
 
   // Calculate CAGR
-  const sortedPurchases = [...purchases].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  const firstPurchaseDate = new Date(sortedPurchases[0].date)
-  const today = new Date()
+  const sortedPurchases = [...purchases].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const firstPurchaseDate = new Date(sortedPurchases[0].date);
+  const today = new Date();
   const investmentDays = Math.max(
     1,
-    Math.floor((today.getTime() - firstPurchaseDate.getTime()) / (1000 * 60 * 60 * 24)),
-  )
-  const years = investmentDays / 365
-  const cagr = years > 0 ? (Math.pow(currentValue / totalInvested, 1 / years) - 1) * 100 : 0
+    Math.floor(
+      (today.getTime() - firstPurchaseDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
+  );
+  const years = investmentDays / 365;
+  const cagr =
+    years > 0
+      ? (Math.pow(currentValue / totalInvested, 1 / years) - 1) * 100
+      : 0;
 
   // Portfolio vs BTC overlay data
-  const portfolioVsBTC: Array<{ date: string; portfolioValue: number; btcPrice: number }> = []
+  const portfolioVsBTC: Array<{
+    date: string;
+    portfolioValue: number;
+    btcPrice: number;
+  }> = [];
   sortedPurchases.forEach((purchase, index) => {
-    const purchaseDate = new Date(purchase.date)
-    const cumulativeBTC = sortedPurchases.slice(0, index + 1).reduce((sum, p) => sum + p.btcAmount, 0)
+    const purchaseDate = new Date(purchase.date);
+    const cumulativeBTC = sortedPurchases
+      .slice(0, index + 1)
+      .reduce((sum, p) => sum + p.btcAmount, 0);
     portfolioVsBTC.push({
       date: toJalali(purchase.date),
       portfolioValue: cumulativeBTC * currentBTCPrice,
       btcPrice: purchase.usdPriceAtPurchase,
-    })
-  })
+    });
+  });
 
   // Correlation score (simplified - comparing portfolio growth vs BTC price trend)
-  const portfolioGrowth = portfolioVsBTC.map((d) => d.portfolioValue)
-  const btcPrices = portfolioVsBTC.map((d) => d.btcPrice)
-  const correlationScore = calculateCorrelation(portfolioGrowth, btcPrices)
+  const portfolioGrowth = portfolioVsBTC.map((d) => d.portfolioValue);
+  const btcPrices = portfolioVsBTC.map((d) => d.btcPrice);
+  const correlationScore = calculateCorrelation(portfolioGrowth, btcPrices);
 
   // Hold strategy benchmark
-  const firstPurchase = sortedPurchases[0]
-  const holdStrategyBTC = totalInvested / firstPurchase.usdPriceAtPurchase
-  const holdStrategyValue = holdStrategyBTC * currentBTCPrice
-  const holdStrategyReturn = ((holdStrategyValue - totalInvested) / totalInvested) * 100
+  const firstPurchase = sortedPurchases[0];
+  const holdStrategyBTC = totalInvested / firstPurchase.usdPriceAtPurchase;
+  const holdStrategyValue = holdStrategyBTC * currentBTCPrice;
+  const holdStrategyReturn =
+    ((holdStrategyValue - totalInvested) / totalInvested) * 100;
 
   // Activity metrics
-  const totalPurchases = purchases.length
-  const averagePurchaseSize = totalInvested / totalPurchases
-  const purchaseFrequency = totalPurchases > 0 && investmentDays > 0 ? investmentDays / totalPurchases : 0
-  const cumulativeBTC = totalBTC
+  const totalPurchases = purchases.length;
+  const averagePurchaseSize = totalInvested / totalPurchases;
+  const purchaseFrequency =
+    totalPurchases > 0 && investmentDays > 0
+      ? investmentDays / totalPurchases
+      : 0;
+  const cumulativeBTC = totalBTC;
 
   // Activity heatmap (52 weeks x 7 days = 364 days ~ 1 year)
-  const activityHeatmap: Array<Array<{ date: string; dateJalali: string; count: number; purchases: Purchase[] }>> = []
-  const todayHeatmap = new Date()
+  const activityHeatmap: Array<
+    Array<{
+      date: string;
+      dateJalali: string;
+      count: number;
+      purchases: Purchase[];
+    }>
+  > = [];
+  const todayHeatmap = new Date();
 
   // Group purchases by date
-  const purchasesByDate = new Map<string, Purchase[]>()
+  const purchasesByDate = new Map<string, Purchase[]>();
   purchases.forEach((p) => {
-    const dateStr = p.date.split("T")[0]
-    const existing = purchasesByDate.get(dateStr) || []
-    existing.push(p)
-    purchasesByDate.set(dateStr, existing)
-  })
+    const dateStr = p.date.split("T")[0];
+    const existing = purchasesByDate.get(dateStr) || [];
+    existing.push(p);
+    purchasesByDate.set(dateStr, existing);
+  });
 
   for (let week = 0; week < 52; week++) {
-    const weekData: Array<{ date: string; dateJalali: string; count: number; purchases: Purchase[] }> = []
+    const weekData: Array<{
+      date: string;
+      dateJalali: string;
+      count: number;
+      purchases: Purchase[];
+    }> = [];
     for (let day = 0; day < 7; day++) {
-      const dayIndex = week * 7 + day
-      const date = new Date(todayHeatmap)
-      date.setDate(date.getDate() - (364 - dayIndex))
-      const dateStr = date.toISOString().split("T")[0]
-      const dayPurchases = purchasesByDate.get(dateStr) || []
-      const count = dayPurchases.length
+      const dayIndex = week * 7 + day;
+      const date = new Date(todayHeatmap);
+      date.setDate(date.getDate() - (364 - dayIndex));
+      const dateStr = date.toISOString().split("T")[0];
+      const dayPurchases = purchasesByDate.get(dateStr) || [];
+      const count = dayPurchases.length;
       weekData.push({
         date: dateStr,
         dateJalali: toJalali(dateStr),
         count,
         purchases: dayPurchases,
-      })
+      });
     }
-    activityHeatmap.push(weekData)
+    activityHeatmap.push(weekData);
   }
 
   // Monthly performance - calculate profit/loss for purchases made in each month
-  const monthlyPerformanceMap = new Map<string, { invested: number; btc: number }>()
+  const monthlyPerformanceMap = new Map<
+    string,
+    { invested: number; btc: number }
+  >();
   sortedPurchases.forEach((p) => {
-    const jalaliDate = toJalali(p.date)
-    const monthKey = jalaliDate.substring(0, 7) // Get YYYY/MM format
-    const existing = monthlyPerformanceMap.get(monthKey) || { invested: 0, btc: 0 }
+    const jalaliDate = toJalali(p.date);
+    const monthKey = jalaliDate.substring(0, 7); // Get YYYY/MM format
+    const existing = monthlyPerformanceMap.get(monthKey) || {
+      invested: 0,
+      btc: 0,
+    };
     monthlyPerformanceMap.set(monthKey, {
       invested: existing.invested + p.totalUsdSpent,
       btc: existing.btc + p.btcAmount,
-    })
-  })
+    });
+  });
 
   const monthlyPerformance = Array.from(monthlyPerformanceMap.entries())
     .map(([month, data]) => {
-      const currentValueOfMonthBTC = data.btc * currentBTCPrice
-      const profitLoss = currentValueOfMonthBTC - data.invested
-      const profitLossPercent = data.invested > 0 ? (profitLoss / data.invested) * 100 : 0
+      const currentValueOfMonthBTC = data.btc * currentBTCPrice;
+      const profitLoss = currentValueOfMonthBTC - data.invested;
+      const profitLossPercent =
+        data.invested > 0 ? (profitLoss / data.invested) * 100 : 0;
 
       return {
         month,
@@ -1422,43 +1898,60 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
         invested: data.invested,
         currentValue: currentValueOfMonthBTC,
         btc: data.btc,
-      }
+      };
     })
-    .sort((a, b) => a.month.localeCompare(b.month))
+    .sort((a, b) => a.month.localeCompare(b.month));
 
   const bestMonth = monthlyPerformance.reduce(
-    (best, curr) => (curr.profitLossPercent > best.profitLossPercent ? curr : best),
+    (best, curr) =>
+      curr.profitLossPercent > best.profitLossPercent ? curr : best,
     monthlyPerformance.length > 0
       ? monthlyPerformance[0]
-      : { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
-  )
+      : {
+          month: "",
+          profitLossPercent: 0,
+          profitLoss: 0,
+          invested: 0,
+          currentValue: 0,
+          btc: 0,
+        }
+  );
   const worstMonth = monthlyPerformance.reduce(
-    (worst, curr) => (curr.profitLossPercent < worst.profitLossPercent ? curr : worst),
+    (worst, curr) =>
+      curr.profitLossPercent < worst.profitLossPercent ? curr : worst,
     monthlyPerformance.length > 0
       ? monthlyPerformance[0]
-      : { month: "", profitLossPercent: 0, profitLoss: 0, invested: 0, currentValue: 0, btc: 0 },
-  )
+      : {
+          month: "",
+          profitLossPercent: 0,
+          profitLoss: 0,
+          invested: 0,
+          currentValue: 0,
+          btc: 0,
+        }
+  );
 
   // Purchase analysis
   const purchaseAnalysis = purchases
     .map((p) => ({
       date: toJalali(p.date),
-      profitLossPercent: ((currentBTCPrice - p.usdPriceAtPurchase) / p.usdPriceAtPurchase) * 100,
+      profitLossPercent:
+        ((currentBTCPrice - p.usdPriceAtPurchase) / p.usdPriceAtPurchase) * 100,
       purchasePrice: p.usdPriceAtPurchase,
     }))
-    .reverse()
+    .reverse();
 
   // Monthly investment breakdown
-  const monthlyMap = new Map<string, number>()
+  const monthlyMap = new Map<string, number>();
   purchases.forEach((p) => {
-    const jalaliDate = toJalali(p.date)
-    const monthKey = jalaliDate.substring(0, 7)
-    monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + p.totalUsdSpent)
-  })
+    const jalaliDate = toJalali(p.date);
+    const monthKey = jalaliDate.substring(0, 7);
+    monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + p.totalUsdSpent);
+  });
 
   const monthlyInvestment = Array.from(monthlyMap.entries())
     .map(([month, amount]) => ({ month, amount }))
-    .sort((a, b) => a.month.localeCompare(b.month))
+    .sort((a, b) => a.month.localeCompare(b.month));
 
   return {
     averagePurchasePrice,
@@ -1485,22 +1978,24 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
     monthlyPerformance,
     bestMonth,
     worstMonth,
-  }
+  };
 }
 
 // Helper function to calculate correlation
 function calculateCorrelation(x: number[], y: number[]): number {
-  if (x.length !== y.length || x.length === 0) return 0
+  if (x.length !== y.length || x.length === 0) return 0;
 
-  const n = x.length
-  const sumX = x.reduce((a, b) => a + b, 0)
-  const sumY = y.reduce((a, b) => a + b, 0)
-  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0)
-  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0)
-  const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0)
+  const n = x.length;
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+  const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+  const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
 
-  const numerator = n * sumXY - sumX * sumY
-  const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY))
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt(
+    (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
+  );
 
-  return denominator === 0 ? 0 : Math.abs(numerator / denominator)
+  return denominator === 0 ? 0 : Math.abs(numerator / denominator);
 }
