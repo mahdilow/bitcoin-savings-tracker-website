@@ -168,7 +168,8 @@
     @apply bg-background text-foreground;
   }
 
-  /* RTL-specific adjustments */
+  /* Fixed RTL direction handling */
+  html[dir="rtl"],
   [dir="rtl"] {
     direction: rtl;
   }

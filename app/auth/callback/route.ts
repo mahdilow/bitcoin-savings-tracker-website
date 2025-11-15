@@ -20,7 +20,24 @@ export async function GET(request: Request) {
 
     console.log("[v0] Successfully exchanged code for session")
 
-    // No need to manually set cookies
+    if (data.user) {
+      const { error: userError } = await supabase
+        .from('users')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email || '',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+
+      if (userError) {
+        console.error("[v0] Error creating user record:", userError)
+      } else {
+        console.log("[v0] User record ensured in database")
+      }
+    }
   }
 
   return NextResponse.redirect(`${origin}`)
