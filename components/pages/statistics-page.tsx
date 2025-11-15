@@ -55,6 +55,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
   const [priceHistory, setPriceHistory] = useState<PriceHistoryData[]>([])
   const [timeRange, setTimeRange] = useState<"7" | "30" | "90" | "365">("30")
   const [isLoading, setIsLoading] = useState(true)
+  const [hoveredDay, setHoveredDay] = useState<{
+    date: string
+    dateJalali: string
+    count: number
+    purchases: Purchase[]
+    x: number
+    y: number
+  } | null>(null)
 
   // Fetch Bitcoin market data
   useEffect(() => {
@@ -329,9 +337,9 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   <AreaChart data={priceHistory} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="priceGradientGreen" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                        <stop offset="50%" stopColor="#10b981" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
+                        <stop offset="50%" stopColor="hsl(var(--chart-2))" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -377,14 +385,14 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                     <Area
                       type="monotone"
                       dataKey="price"
-                      stroke="#10b981"
+                      stroke="hsl(var(--chart-2))"
                       fill="url(#priceGradientGreen)"
                       strokeWidth={2.5}
                       dot={false}
                       activeDot={{
                         r: 6,
-                        fill: "#10b981",
-                        stroke: "#fff",
+                        fill: "hsl(var(--chart-2))",
+                        stroke: "hsl(var(--background))",
                         strokeWidth: 2,
                       }}
                     />
@@ -514,8 +522,8 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                         <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="btcPriceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -591,7 +599,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       type="monotone"
                       dataKey="btcPrice"
                       name="قیمت BTC"
-                      stroke="#10b981"
+                      stroke="hsl(var(--chart-2))"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -716,36 +724,88 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
               <CardDescription>الگوی خرید شما در یک سال گذشته</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto relative">
                 <div className="grid grid-cols-52 gap-1 min-w-[700px]">
                   {userStats.activityHeatmap.map((week, weekIndex) => (
                     <div key={weekIndex} className="space-y-1">
                       {week.map((day, dayIndex) => {
-                        const totalBTC = day.purchases.reduce((sum, p) => sum + p.btcAmount, 0)
-                        const totalUSD = day.purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0)
-
                         return (
                           <div
                             key={`${weekIndex}-${dayIndex}`}
                             className={cn(
-                              "w-2.5 h-2.5 rounded-sm transition-all cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1",
+                              "w-2.5 h-2.5 rounded-sm transition-all cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1 hover:scale-125 relative",
                               day.count === 0 && "bg-muted/30",
                               day.count === 1 && "bg-primary/30",
                               day.count === 2 && "bg-primary/50",
                               day.count === 3 && "bg-primary/70",
                               day.count >= 4 && "bg-primary",
                             )}
-                            title={
-                              day.count > 0
-                                ? `${day.dateJalali}\n${day.count} خرید\n${formatPersianNumber(totalBTC.toFixed(8))} BTC\n$${formatPersianNumber(totalUSD.toLocaleString())}`
-                                : day.dateJalali
-                            }
+                            onMouseEnter={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setHoveredDay({
+                                ...day,
+                                x: rect.left + rect.width / 2,
+                                y: rect.top,
+                              })
+                            }}
+                            onMouseLeave={() => setHoveredDay(null)}
                           />
                         )
                       })}
                     </div>
                   ))}
                 </div>
+
+                {hoveredDay && (
+                  <div
+                    className="fixed z-[100] pointer-events-none"
+                    style={{
+                      left: `${hoveredDay.x}px`,
+                      top: `${hoveredDay.y - 10}px`,
+                      transform: "translate(-50%, -100%)",
+                    }}
+                  >
+                    <div className="bg-popover text-popover-foreground border border-border rounded-lg shadow-xl p-3 space-y-2 min-w-[180px] backdrop-blur-sm">
+                      <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/50">
+                        <p className="text-xs text-muted-foreground font-medium">تاریخ</p>
+                        <p className="text-xs font-semibold">{hoveredDay.dateJalali}</p>
+                      </div>
+
+                      {hoveredDay.count === 0 ? (
+                        <div className="py-2">
+                          <p className="text-sm text-muted-foreground text-center">خریدی انجام نشده</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-xs text-muted-foreground">تعداد خرید</p>
+                            <p className="text-sm font-semibold text-primary">
+                              {formatPersianNumber(hoveredDay.count)} خرید
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-xs text-muted-foreground">مجموع BTC</p>
+                            <p className="text-sm font-semibold">
+                              {formatPersianNumber(
+                                hoveredDay.purchases.reduce((sum, p) => sum + p.btcAmount, 0).toFixed(8),
+                              )}{" "}
+                              BTC
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-xs text-muted-foreground">مجموع سرمایه</p>
+                            <p className="text-sm font-semibold text-green-500">
+                              $
+                              {formatPersianNumber(
+                                hoveredDay.purchases.reduce((sum, p) => sum + p.totalUsdSpent, 0).toLocaleString(),
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
                 <span>یک سال پیش</span>
@@ -777,12 +837,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   <BarChart data={userStats.monthlyPerformance} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="profitBarGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
                       </linearGradient>
                       <linearGradient id="lossBarGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
+                        <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -917,7 +977,6 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
             </Card>
           </div>
 
-          {/* ... existing charts ... */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="bg-card/50 backdrop-blur">
               <CardHeader className="pb-2">
@@ -1033,12 +1092,12 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                   <BarChart data={userStats.purchaseAnalysis} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.4} />
                       </linearGradient>
                       <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
+                        <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -1290,7 +1349,7 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
   // Activity metrics
   const totalPurchases = purchases.length
   const averagePurchaseSize = totalInvested / totalPurchases
-  const purchaseFrequency = investmentDays / totalPurchases
+  const purchaseFrequency = totalPurchases > 0 && investmentDays > 0 ? investmentDays / totalPurchases : 0
   const cumulativeBTC = totalBTC
 
   // Activity heatmap (52 weeks x 7 days = 364 days ~ 1 year)
@@ -1345,8 +1404,8 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
 
       return {
         month,
-        profitLossPercent, // Changed from profitLoss to profitLossPercent
-        profitLoss, // Keep absolute value for tooltip
+        profitLossPercent,
+        profitLoss,
         invested: data.invested,
         currentValue: currentValueOfMonthBTC,
         btc: data.btc,

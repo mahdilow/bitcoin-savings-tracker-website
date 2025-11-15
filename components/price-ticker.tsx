@@ -129,7 +129,7 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
         <div className="text-left">
           <p className="text-sm text-muted-foreground mb-1">تغییر ۲۴ ساعت</p>
           <div
-            className={`flex items-center gap-2 text-xl font-semibold ${isPositive ? "text-[rgb(var(--success))]" : "text-destructive"}`}
+            className={`flex items-center gap-2 text-xl font-semibold ${isPositive ? "text-success" : "text-destructive"}`}
           >
             {isPositive ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
             <span>

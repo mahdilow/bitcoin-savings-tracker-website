@@ -53,12 +53,12 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="rgb(247, 147, 26)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="rgb(247, 147, 26)" stopOpacity={0} />
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="rgb(59, 130, 246)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="rgb(59, 130, 246)" stopOpacity={0} />
+              <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid
@@ -75,13 +75,14 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(var(--card))",
+              backgroundColor: "hsl(var(--popover))",
               border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
               direction: "rtl",
-              color: "hsl(var(--foreground))",
+              color: "hsl(var(--popover-foreground))",
+              boxShadow: "0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1)",
             }}
-            labelStyle={{ color: "hsl(var(--foreground))" }}
+            labelStyle={{ color: "hsl(var(--popover-foreground))" }}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const value = payload.find((p) => p.dataKey === "value")?.value as number
@@ -93,18 +94,22 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
                 return (
                   <div
                     style={{
-                      backgroundColor: "hsl(var(--card))",
+                      backgroundColor: "hsl(var(--popover))",
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                       padding: "12px",
                       direction: "rtl",
+                      boxShadow:
+                        "0 4px 6px -1px hsl(var(--foreground) / 0.1), 0 2px 4px -2px hsl(var(--foreground) / 0.1)",
                     }}
                   >
-                    <p style={{ color: "hsl(var(--foreground))", marginBottom: "8px", fontWeight: "bold" }}>{label}</p>
-                    <p style={{ color: "rgb(247, 147, 26)", marginBottom: "4px" }}>
+                    <p style={{ color: "hsl(var(--popover-foreground))", marginBottom: "8px", fontWeight: "bold" }}>
+                      {label}
+                    </p>
+                    <p style={{ color: "hsl(var(--muted-foreground))", marginBottom: "4px" }}>
                       ارزش فعلی: {formatCurrency(value)}
                     </p>
-                    <p style={{ color: "rgb(59, 130, 246)", marginBottom: "8px" }}>
+                    <p style={{ color: "hsl(var(--muted-foreground))", marginBottom: "8px" }}>
                       سرمایه: {formatCurrency(invested)}
                     </p>
                     <div
@@ -116,7 +121,7 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
                     >
                       <p
                         style={{
-                          color: isProfit ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)",
+                          color: isProfit ? "hsl(var(--success))" : "hsl(var(--destructive))",
                           fontWeight: "bold",
                           fontSize: "14px",
                         }}
@@ -137,11 +142,11 @@ export function PortfolioChart({ purchases, currentBTCPrice }: PortfolioChartPro
           <Area
             type="monotone"
             dataKey="invested"
-            stroke="rgb(59, 130, 246)"
+            stroke="hsl(var(--chart-4))"
             strokeWidth={2}
             fill="url(#colorInvested)"
           />
-          <Area type="monotone" dataKey="value" stroke="rgb(247, 147, 26)" strokeWidth={2} fill="url(#colorValue)" />
+          <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorValue)" />
         </AreaChart>
       </ResponsiveContainer>
     </Card>
