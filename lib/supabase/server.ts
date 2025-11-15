@@ -24,6 +24,11 @@ export async function createClient() {
           }
         },
       },
+      cookieOptions: {
+        name: "oryn-auth",
+        secure: true,
+        sameSite: "lax",
+      },
     },
   );
 }
