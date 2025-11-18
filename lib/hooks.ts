@@ -7,7 +7,7 @@ export function useChartColors() {
   const { theme } = useTheme()
   const [chartColors, setChartColors] = useState({
     value: "hsl(var(--primary))",
-    invested: "hsl(var(--chart-2))",
+    invested: "hsl(var(--success))",
     grid: "hsl(var(--border))",
     text: "hsl(var(--foreground))",
     positive: "hsl(var(--primary))",
@@ -21,7 +21,7 @@ export function useChartColors() {
       const style = getComputedStyle(document.documentElement)
       setChartColors({
         value: `hsl(${style.getPropertyValue("--primary").trim()})`,
-        invested: `hsl(${style.getPropertyValue("--chart-2").trim()})`,
+        invested: `hsl(${style.getPropertyValue("--success").trim()})`,
         grid: `hsl(${style.getPropertyValue("--border").trim()})`,
         text: `hsl(${style.getPropertyValue("--foreground").trim()})`,
         positive: `hsl(${style.getPropertyValue("--primary").trim()})`,

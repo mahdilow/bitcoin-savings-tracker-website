@@ -178,12 +178,11 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
             <Button
               onClick={handleSyncClick}
               disabled={isSyncing}
-              variant={isSynced ? "default" : "outline"}
-              size="icon"
+              variant={isSynced ? "default" : "ghost"}
               className={
                 isSynced
-                  ? "bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/20 animate-pulse"
-                  : "border-primary text-primary hover:bg-primary/10"
+                  ? "w-10 h-10 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/20 animate-pulse"
+                  : "w-10 h-10 rounded-full text-primary hover:bg-primary/10"
               }
             >
               {isSyncing ? (

@@ -408,17 +408,17 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.positive}
+                          stopColor="#F7931A"
                           stopOpacity={0.4}
                         />
                         <stop
                           offset="50%"
-                          stopColor={chartColors.positive}
+                          stopColor="#F7931A"
                           stopOpacity={0.2}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.positive}
+                          stopColor="#F7931A"
                           stopOpacity={0}
                         />
                       </linearGradient>
@@ -470,13 +470,13 @@ export function StatisticsPage({
                     <Area
                       type="monotone"
                       dataKey="price"
-                      stroke={chartColors.positive}
+                      stroke="#F7931A"
                       fill="url(#priceGradient)"
                       strokeWidth={2.5}
                       dot={false}
                       activeDot={{
                         r: 6,
-                        fill: chartColors.positive,
+                        fill: "#F7931A",
                         stroke: "var(--background)",
                         strokeWidth: 2,
                       }}
@@ -635,12 +635,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.invested}
+                          stopColor="#10B981"
                           stopOpacity={0.4}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.invested}
+                          stopColor="#10B981"
                           stopOpacity={0}
                         />
                       </linearGradient>
@@ -720,7 +720,7 @@ export function StatisticsPage({
                       type="monotone"
                       dataKey="portfolioValue"
                       name="ارزش پرتفوی"
-                      stroke={chartColors.invested}
+                      stroke="#10B981"
                       fill="url(#investedGradient)"
                       strokeWidth={2.5}
                     />
@@ -729,7 +729,7 @@ export function StatisticsPage({
                       type="monotone"
                       dataKey="btcPrice"
                       name="قیمت BTC"
-                      stroke={chartColors.positive}
+                      stroke="#F7931A"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -1037,12 +1037,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.positive}
+                          stopColor="#10B981"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.positive}
+                          stopColor="#10B981"
                           stopOpacity={0.4}
                         />
                       </linearGradient>
@@ -1055,12 +1055,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.negative}
+                          stopColor="#EF4444"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.negative}
+                          stopColor="#EF4444"
                           stopOpacity={0.4}
                         />
                       </linearGradient>
@@ -1416,12 +1416,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.positive}
+                          stopColor="#10B981"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.positive}
+                          stopColor="#10B981"
                           stopOpacity={0.4}
                         />
                       </linearGradient>
@@ -1434,12 +1434,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.negative}
+                          stopColor="#EF4444"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.negative}
+                          stopColor="#EF4444"
                           stopOpacity={0.4}
                         />
                       </linearGradient>
@@ -1604,12 +1604,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor={chartColors.invested}
+                          stopColor="#10B981"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor={chartColors.invested}
+                          stopColor="#10B981"
                           stopOpacity={0.4}
                         />
                       </linearGradient>

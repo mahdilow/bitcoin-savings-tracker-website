@@ -82,24 +82,24 @@ export function PortfolioChart({
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor={chartColors.value}
+                stopColor="#F7931A"
                 stopOpacity={0.3}
               />
               <stop
                 offset="95%"
-                stopColor={chartColors.value}
+                stopColor="#F7931A"
                 stopOpacity={0}
               />
             </linearGradient>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="5%"
-                stopColor={chartColors.invested}
+                stopColor="#10B981"
                 stopOpacity={0.3}
               />
               <stop
                 offset="95%"
-                stopColor={chartColors.invested}
+                stopColor="#10B981"
                 stopOpacity={0}
               />
             </linearGradient>
@@ -164,14 +164,14 @@ export function PortfolioChart({
           <Area
             type="monotone"
             dataKey="invested"
-            stroke={chartColors.invested}
+            stroke="#10B981"
             strokeWidth={2}
             fill="url(#colorInvested)"
           />
           <Area
             type="monotone"
             dataKey="value"
-            stroke={chartColors.value}
+            stroke="#F7931A"
             strokeWidth={2}
             fill="url(#colorValue)"
           />
