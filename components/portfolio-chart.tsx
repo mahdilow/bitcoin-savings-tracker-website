@@ -15,7 +15,7 @@ import {
   Legend,
 } from "recharts";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useChartColors } from "@/lib/hooks";
 
 interface PortfolioChartProps {
   purchases: Purchase[];
@@ -27,22 +27,7 @@ export function PortfolioChart({
   currentBTCPrice,
 }: PortfolioChartProps) {
   const { theme } = useTheme();
-  const [chartColors, setChartColors] = useState({
-    value: "",
-    invested: "",
-    grid: "",
-    text: "",
-  });
-
-  useEffect(() => {
-    const style = getComputedStyle(document.documentElement);
-    setChartColors({
-      value: `rgb(${style.getPropertyValue("--primary").trim()})`,
-      invested: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
-      grid: `rgb(${style.getPropertyValue("--border").trim()})`,
-      text: `rgb(${style.getPropertyValue("--foreground").trim()})`,
-    });
-  }, [theme]);
+  const chartColors = useChartColors();
 
   // Sort purchases by date
   const sortedPurchases = [...purchases].sort(
@@ -91,8 +76,8 @@ export function PortfolioChart({
       <h2 className="text-2xl font-bold text-foreground mb-6">
         نمودار ارزش پرتفوی
       </h2>
-      <ResponsiveContainer width="100%" height={300} key={theme}>
-        <AreaChart data={chartData}>
+      <ResponsiveContainer width="100%" height={300}>
+        <AreaChart data={chartData} key={theme}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop

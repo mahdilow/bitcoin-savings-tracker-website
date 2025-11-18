@@ -150,9 +150,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 relative">
-      <div className="absolute top-4 left-4 right-4 z-50 flex justify-between items-center">
-        <ThemeToggle />
+      <div className="absolute top-4 left-4 z-50 flex justify-start items-center gap-2">
         <CloudSyncButton purchases={purchases} />
+        <ThemeToggle />
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6">

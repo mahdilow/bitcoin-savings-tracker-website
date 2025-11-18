@@ -114,7 +114,7 @@ export function Sidebar({ className }: SidebarProps) {
                 }}
                 className={cn(
                   "w-full flex items-center gap-4 rounded-xl transition-all duration-150 ease-out relative group",
-                  isHovered ? "px-4 py-3.5" : "md:px-3 md:py-3.5 md:justify-center px-4 py-3.5",
+                  isHovered ? "px-4 py-3.5 gap-4" : "md:px-2 md:py-3.5 px-4 py-3.5",
                   "hover:bg-primary/10 hover:shadow-sm",
                   isActive
                     ? "bg-primary/15 text-primary shadow-md before:absolute before:right-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-primary before:rounded-l-full before:shadow-[0_0_8px_rgba(247,147,26,0.5)]"
@@ -126,6 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
                     "w-[22px] h-[22px] transition-all duration-150 ease-out flex-shrink-0",
                     "group-hover:scale-110",
                     isActive && "text-primary drop-shadow-[0_0_4px_rgba(247,147,26,0.3)]",
+                    !isHovered && "mx-auto"
                   )}
                 />
                 <div

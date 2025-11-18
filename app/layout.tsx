@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Sidebar } from "@/components/sidebar"
 import { BottomNav } from "@/components/bottom-nav"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const vazirmatn = Vazirmatn({
@@ -41,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -49,11 +50,18 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={`${vazirmatn.variable} font-sans antialiased`}>
-        <Sidebar className="hidden md:flex" />
-        <BottomNav />
-        <main className="md:pr-20 pb-20 md:pb-0">{children}</main>
-        <PWAInstallPrompt />
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Sidebar className="hidden md:flex" />
+          <BottomNav />
+          <main className="md:pr-20 pb-20 md:pb-0">{children}</main>
+          <PWAInstallPrompt />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   )

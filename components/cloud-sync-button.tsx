@@ -11,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { createSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from 'next/navigation'
 import type { Purchase } from "@/lib/types"
@@ -157,28 +163,43 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
   if (!mounted) return null
 
+  const getTooltipText = () => {
+    if (isSyncing) return "در حال همگام‌سازی..."
+    if (isLoggedIn && isSynced) return "همگام با ابر"
+    if (isLoggedIn && !isSynced) return "همگام‌سازی با ابر"
+    return "ورود برای همگام‌سازی"
+  }
+
   return (
     <>
-      <Button
-        onClick={handleSyncClick}
-        disabled={isSyncing}
-        variant={isSynced ? "default" : "outline"}
-        size="sm"
-        className={
-          isSynced
-            ? "bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20 animate-pulse"
-            : "border-primary text-primary hover:bg-primary/10"
-        }
-      >
-        {isSyncing ? (
-          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-        ) : isSynced ? (
-          <Cloud className="w-4 h-4 ml-2" />
-        ) : (
-          <CloudOff className="w-4 h-4 ml-2" />
-        )}
-        {isSyncing ? "در حال همگام‌سازی..." : isSynced ? "همگام با ابر" : "همگام‌سازی با ابر"}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleSyncClick}
+              disabled={isSyncing}
+              variant={isSynced ? "default" : "outline"}
+              size="icon"
+              className={
+                isSynced
+                  ? "bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/20 animate-pulse"
+                  : "border-primary text-primary hover:bg-primary/10"
+              }
+            >
+              {isSyncing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isSynced ? (
+                <Cloud className="w-4 h-4" />
+              ) : (
+                <CloudOff className="w-4 h-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getTooltipText()}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
         <DialogContent className="sm:max-w-[500px]">

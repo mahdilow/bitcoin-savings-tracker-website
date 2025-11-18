@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useChartColors } from "@/lib/hooks";
 import {
   Area,
   AreaChart,
@@ -85,26 +86,7 @@ export function StatisticsPage({
     x: number;
     y: number;
   } | null>(null);
-  const [chartColors, setChartColors] = useState({
-    positive: "",
-    negative: "",
-    invested: "",
-    grid: "",
-    text: "",
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const style = getComputedStyle(document.documentElement);
-    setChartColors({
-      positive: `rgb(${style.getPropertyValue("--primary").trim()})`,
-      negative: `rgb(${style.getPropertyValue("--destructive").trim()})`,
-      invested: `rgb(${style.getPropertyValue("--chart-2").trim()})`,
-      grid: `rgb(${style.getPropertyValue("--border").trim()})`,
-      text: `rgb(${style.getPropertyValue("--foreground").trim()})`,
-    });
-  }, [theme]);
+  const chartColors = useChartColors();
 
   // Fetch Bitcoin market data
   useEffect(() => {
