@@ -67,7 +67,7 @@ export function PortfolioChart({
     });
   }
 
-  if (purchases.length === 0 || !chartColors.value) {
+  if (purchases.length === 0) {
     return null;
   }
 
@@ -80,33 +80,17 @@ export function PortfolioChart({
         <AreaChart data={chartData} key={theme}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="#F7931A"
-                stopOpacity={0.3}
-              />
-              <stop
-                offset="95%"
-                stopColor="#F7931A"
-                stopOpacity={0}
-              />
+              <stop offset="5%" stopColor="#F7931A" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#F7931A" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="#10B981"
-                stopOpacity={0.3}
-              />
-              <stop
-                offset="95%"
-                stopColor="#10B981"
-                stopOpacity={0}
-              />
+              <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke={chartColors.grid}
+            stroke="#cccccc"
             strokeOpacity={0.7}
           />
           <XAxis dataKey="date" stroke={chartColors.text} fontSize={12} />

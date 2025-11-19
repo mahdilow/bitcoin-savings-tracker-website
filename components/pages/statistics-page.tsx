@@ -1604,12 +1604,12 @@ export function StatisticsPage({
                       >
                         <stop
                           offset="0%"
-                          stopColor="#10B981"
+                          stopColor="#FFD700"
                           stopOpacity={0.9}
                         />
                         <stop
                           offset="100%"
-                          stopColor="#10B981"
+                          stopColor="#FFD700"
                           stopOpacity={0.4}
                         />
                       </linearGradient>
@@ -1670,7 +1670,7 @@ export function StatisticsPage({
                     />
                     <Bar
                       dataKey="amount"
-                      fill="url(#investedGradient)"
+                      fill="#F7931A"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={60}
                     />
