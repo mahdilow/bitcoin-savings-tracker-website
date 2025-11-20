@@ -1,7 +1,14 @@
 "use client"
 
 import { AlertDialogTrigger } from "@/components/ui/alert-dialog"
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,7 +26,7 @@ import {
 import type { Purchase } from "@/lib/types"
 import { formatCurrency, formatBTC } from "@/lib/utils"
 import { isoToJalali } from "@/lib/jalali-utils"
-import { Edit, Trash2, ShoppingCart, X } from "lucide-react"
+import { Edit, Trash2, ShoppingCart, X, ArrowUpDown, Calendar, DollarSign, Bitcoin } from "lucide-react"
 import { ImportExportButtons } from "@/components/import-export-buttons"
 
 interface PurchaseHistoryProps {
@@ -30,10 +37,19 @@ interface PurchaseHistoryProps {
   onImport: (purchases: Purchase[]) => void
 }
 
+type SortField = "date" | "usdPriceAtPurchase" | "btcAmount"
+type SortDirection = "asc" | "desc"
+
+interface SortConfig {
+  field: SortField
+  direction: SortDirection
+}
+
 export function PurchaseHistory({ purchases, onEdit, onDelete, onDeleteMultiple, onImport }: PurchaseHistoryProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: "date", direction: "desc" })
 
   const isAllSelected = purchases.length > 0 && selectedIds.size === purchases.length
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < purchases.length
@@ -73,6 +89,34 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onDeleteMultiple,
     }
   }
 
+  const sortedPurchases = [...purchases].sort((a, b) => {
+    const { field, direction } = sortConfig
+    const modifier = direction === "asc" ? 1 : -1
+
+    if (field === "date") {
+      return (new Date(a.date).getTime() - new Date(b.date).getTime()) * modifier
+    }
+    return (a[field] - b[field]) * modifier
+  })
+
+  const handleSort = (field: SortField) => {
+    setSortConfig((current) => ({
+      field,
+      direction: current.field === field && current.direction === "desc" ? "asc" : "desc",
+    }))
+  }
+
+  const getSortLabel = (field: SortField) => {
+    switch (field) {
+      case "date":
+        return "تاریخ خرید"
+      case "usdPriceAtPurchase":
+        return "قیمت خرید"
+      case "btcAmount":
+        return "مقدار بیت‌کوین"
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -105,7 +149,54 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onDeleteMultiple,
             </>
           )}
         </div>
-        <ImportExportButtons purchases={purchases} onImport={onImport} />
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                <ArrowUpDown className="h-4 w-4" />
+                <span className="hidden sm:inline">مرتب‌سازی: {getSortLabel(sortConfig.field)}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>مرتب‌سازی بر اساس</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleSort("date")} className="justify-between">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  تاریخ
+                </span>
+                {sortConfig.field === "date" && (
+                  <span className="text-xs text-muted-foreground">
+                    {sortConfig.direction === "asc" ? "قدیمی‌ترین" : "جدیدترین"}
+                  </span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort("usdPriceAtPurchase")} className="justify-between">
+                <span className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  قیمت
+                </span>
+                {sortConfig.field === "usdPriceAtPurchase" && (
+                  <span className="text-xs text-muted-foreground">
+                    {sortConfig.direction === "asc" ? "ارزان‌ترین" : "گران‌ترین"}
+                  </span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort("btcAmount")} className="justify-between">
+                <span className="flex items-center gap-2">
+                  <Bitcoin className="h-4 w-4" />
+                  مقدار
+                </span>
+                {sortConfig.field === "btcAmount" && (
+                  <span className="text-xs text-muted-foreground">
+                    {sortConfig.direction === "asc" ? "کمترین" : "بیشترین"}
+                  </span>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ImportExportButtons purchases={purchases} onImport={onImport} />
+        </div>
       </div>
 
       {selectedIds.size > 0 && (
@@ -152,7 +243,7 @@ export function PurchaseHistory({ purchases, onEdit, onDelete, onDeleteMultiple,
         </Card>
       ) : (
         <div className="max-h-[500px] md:max-h-[600px] overflow-y-auto pr-3 space-y-3 custom-scrollbar rounded-lg">
-          {purchases.map((purchase, index) => {
+          {sortedPurchases.map((purchase, index) => {
             const isSelected = selectedIds.has(purchase.id)
             return (
               <Card

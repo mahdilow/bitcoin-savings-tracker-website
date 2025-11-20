@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Plus } from 'lucide-react'
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { QuoteCard } from "@/components/quote-card"
 import { PriceTicker } from "@/components/price-ticker"
@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/empty-state"
 import { StatisticsPage } from "@/components/pages/statistics-page"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { CloudSyncButton } from "@/components/cloud-sync-button"
+import { createSupabaseClient } from "@/lib/supabase/client"
 import { quotes } from "@/lib/quotes"
 import { getDailyQuote, calculateMetrics } from "@/lib/utils"
 import { storage } from "@/lib/storage"
@@ -52,9 +53,47 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    const loadedPurchases = storage.loadPurchases()
-    setPurchases(loadedPurchases)
-    setIsLoaded(true)
+    const loadData = async () => {
+      // 1. Load local data first to show something immediately
+      const localPurchases = storage.loadPurchases()
+      setPurchases(localPurchases)
+
+      // 2. Check if cloud sync is enabled
+      if (storage.isCloudSyncEnabled()) {
+        try {
+          const supabase = createSupabaseClient()
+          const {
+            data: { session },
+          } = await supabase.auth.getSession()
+
+          if (session?.user) {
+            console.log("[v0] Fetching purchases from cloud...")
+            const { data, error } = await supabase.from("purchases").select("*").order("date", { ascending: false })
+
+            if (error) throw error
+
+            if (data) {
+              console.log("[v0] Cloud purchases fetched:", data.length)
+              const remotePurchases: Purchase[] = data.map((p) => ({
+                id: p.id || Date.now().toString(),
+                date: p.date,
+                btcAmount: Number(p.amount_btc),
+                usdPriceAtPurchase: Number(p.price_usd),
+                totalUsdSpent: Number(p.amount_btc) * Number(p.price_usd),
+              }))
+
+              setPurchases(remotePurchases)
+            }
+          }
+        } catch (error) {
+          console.error("[v0] Failed to sync with cloud:", error)
+        }
+      }
+
+      setIsLoaded(true)
+    }
+
+    loadData()
   }, [])
 
   useEffect(() => {
@@ -69,13 +108,13 @@ export default function DashboardPage() {
         const response = await fetch("/api/nobitex", {
           method: "POST",
         })
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
-        
+
         const data = await response.json()
-        
+
         if (data && data.stats && data.stats["btc-rls"] && data.stats["btc-rls"].latest) {
           setCurrentBTCPriceIRT(Number.parseFloat(data.stats["btc-rls"].latest) / 10)
         } else {
