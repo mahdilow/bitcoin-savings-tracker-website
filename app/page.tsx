@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null)
   const [activePage, setActivePage] = useState<string>("home")
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const dailyQuote = getDailyQuote(quotes)
   const metrics = calculateMetrics(purchases, currentBTCPrice, currentBTCPriceIRT)
@@ -140,21 +141,39 @@ export default function DashboardPage() {
     setCurrentBTCPrice(price)
   }, [])
 
+  const syncData = async (newPurchases: Purchase[]) => {
+    if (storage.isCloudSyncEnabled()) {
+      setIsSyncing(true)
+      try {
+        await storage.syncPurchasesToSupabase(newPurchases)
+        console.log("[v0] Auto-synced with cloud")
+      } catch (error) {
+        console.error("[v0] Auto-sync failed:", error)
+      } finally {
+        setIsSyncing(false)
+      }
+    }
+  }
+
   const handleSavePurchase = (purchaseData: Omit<Purchase, "id">) => {
+    let newPurchases: Purchase[] = []
     if (editingPurchase) {
-      setPurchases((prev) =>
-        prev.map((p) => (p.id === editingPurchase.id ? { ...purchaseData, id: editingPurchase.id } : p)),
-      )
+      setPurchases((prev) => {
+        newPurchases = prev.map((p) => (p.id === editingPurchase.id ? { ...purchaseData, id: editingPurchase.id } : p))
+        return newPurchases
+      })
       setEditingPurchase(null)
     } else {
       const newPurchase: Purchase = {
         ...purchaseData,
         id: Date.now().toString(),
       }
-      setPurchases((prev) =>
-        [...prev, newPurchase].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-      )
+      setPurchases((prev) => {
+        newPurchases = [...prev, newPurchase].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        return newPurchases
+      })
     }
+    syncData(newPurchases)
   }
 
   const handleEditPurchase = (purchase: Purchase) => {
@@ -163,17 +182,27 @@ export default function DashboardPage() {
   }
 
   const handleDeletePurchase = (id: string) => {
-    setPurchases((prev) => prev.filter((p) => p.id !== id))
+    setPurchases((prev) => {
+      const newPurchases = prev.filter((p) => p.id !== id)
+      syncData(newPurchases)
+      return newPurchases
+    })
   }
 
   const handleDeleteMultiplePurchases = (ids: string[]) => {
-    setPurchases((prev) => prev.filter((p) => !ids.includes(p.id)))
+    setPurchases((prev) => {
+      const newPurchases = prev.filter((p) => !ids.includes(p.id))
+      syncData(newPurchases)
+      return newPurchases
+    })
   }
 
   const handleImportPurchases = (importedPurchases: Purchase[]) => {
     setPurchases((prev) => {
       const combined = [...prev, ...importedPurchases]
-      return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      const newPurchases = combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      syncData(newPurchases)
+      return newPurchases
     })
   }
 
@@ -193,7 +222,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 relative">
       <div className="absolute top-4 left-4 z-50 flex justify-start items-center gap-2">
-        <CloudSyncButton purchases={purchases} />
+        <CloudSyncButton purchases={purchases} isSyncing={isSyncing} />
         <ThemeToggle />
       </div>
 

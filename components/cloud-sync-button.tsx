@@ -14,20 +14,24 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createSupabaseClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { storage } from "@/lib/storage"
 import type { Purchase } from "@/lib/types"
 
 interface CloudSyncButtonProps {
   purchases: Purchase[]
   onSyncComplete?: () => void
+  isSyncing?: boolean
 }
 
-export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonProps) {
+export function CloudSyncButton({ purchases, onSyncComplete, isSyncing: externalIsSyncing }: CloudSyncButtonProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isSynced, setIsSynced] = useState(false)
   const [showPolicyDialog, setShowPolicyDialog] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
+  const [internalIsSyncing, setInternalIsSyncing] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+
+  const isSyncing = externalIsSyncing || internalIsSyncing
 
   useEffect(() => {
     setMounted(true)
@@ -76,7 +80,7 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
         if (!error && count !== null && count > 0) {
           console.log("[v0] User has existing data, enabling sync status")
-          localStorage.setItem("oryn-cloud-sync-enabled", "true")
+          storage.enableCloudSync()
           setIsSynced(true)
         }
       }
@@ -88,8 +92,7 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
   const checkSyncStatus = () => {
     if (typeof window === "undefined") return
-    const syncEnabled = localStorage.getItem("oryn-cloud-sync-enabled")
-    setIsSynced(syncEnabled === "true")
+    setIsSynced(storage.isCloudSyncEnabled())
   }
 
   const handleSyncClick = async () => {
@@ -113,48 +116,13 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
   const handleAcceptPolicy = async () => {
     setShowPolicyDialog(false)
-    setIsSyncing(true)
+    setInternalIsSyncing(true)
 
     try {
-      const supabase = createSupabaseClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error("User not authenticated")
-      }
-
-      console.log("[v0] Syncing purchases for user:", user.id)
-
-      // Delete existing purchases for this user
-      const { error: deleteError } = await supabase.from("purchases").delete().eq("user_id", user.id)
-
-      if (deleteError) {
-        console.error("[v0] Delete error:", deleteError)
-        throw deleteError
-      }
-
-      const purchasesToSync = purchases.map((p) => ({
-        user_id: user.id,
-        date: p.date,
-        amount_btc: p.btcAmount, // Changed from btc_amount
-        price_usd: p.usdPriceAtPurchase, // Changed from usd_price_at_purchase
-        // total_usd_spent removed as it's not in the schema
-      }))
-
-      if (purchasesToSync.length > 0) {
-        console.log("[v0] Inserting purchases:", purchasesToSync.length)
-        const { error: insertError } = await supabase.from("purchases").insert(purchasesToSync)
-
-        if (insertError) {
-          console.error("[v0] Insert error:", insertError)
-          throw insertError
-        }
-      }
+      await storage.syncPurchasesToSupabase(purchases)
 
       // Mark as synced
-      localStorage.setItem("oryn-cloud-sync-enabled", "true")
+      storage.enableCloudSync()
       setIsSynced(true)
       onSyncComplete?.()
 
@@ -164,7 +132,7 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
       const errorMessage = error instanceof Error ? error.message : "خطای ناشناخته"
       alert(`خطا در همگام‌سازی: ${errorMessage}\nلطفاً دوباره تلاش کنید.`)
     } finally {
-      setIsSyncing(false)
+      setInternalIsSyncing(false)
     }
   }
 

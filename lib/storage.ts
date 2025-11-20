@@ -1,3 +1,4 @@
+import { createSupabaseClient } from "@/lib/supabase/client"
 import type { Purchase } from "./types"
 
 const STORAGE_KEY = "oryn-purchases"
@@ -69,5 +70,39 @@ export const storage = {
   disableCloudSync(): void {
     if (typeof window === "undefined") return
     localStorage.removeItem(CLOUD_SYNC_KEY)
+  },
+
+  // Sync purchases to Supabase
+  async syncPurchasesToSupabase(purchases: Purchase[]): Promise<void> {
+    const supabase = createSupabaseClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
+
+    // Delete existing purchases for this user
+    const { error: deleteError } = await supabase.from("purchases").delete().eq("user_id", user.id)
+
+    if (deleteError) {
+      throw deleteError
+    }
+
+    const purchasesToSync = purchases.map((p) => ({
+      user_id: user.id,
+      date: p.date,
+      amount_btc: p.btcAmount,
+      price_usd: p.usdPriceAtPurchase,
+    }))
+
+    if (purchasesToSync.length > 0) {
+      const { error: insertError } = await supabase.from("purchases").insert(purchasesToSync)
+
+      if (insertError) {
+        throw insertError
+      }
+    }
   },
 }
