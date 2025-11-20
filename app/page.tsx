@@ -58,36 +58,39 @@ export default function DashboardPage() {
       const localPurchases = storage.loadPurchases()
       setPurchases(localPurchases)
 
-      // 2. Check if cloud sync is enabled
-      if (storage.isCloudSyncEnabled()) {
-        try {
-          const supabase = createSupabaseClient()
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
+      // 2. Check for authenticated user and fetch cloud data
+      try {
+        const supabase = createSupabaseClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
-          if (session?.user) {
-            console.log("[v0] Fetching purchases from cloud...")
-            const { data, error } = await supabase.from("purchases").select("*").order("date", { ascending: false })
+        if (session?.user) {
+          console.log("[v0] User authenticated, fetching purchases from cloud...")
+          const { data, error } = await supabase.from("purchases").select("*").order("date", { ascending: false })
 
-            if (error) throw error
+          if (error) throw error
 
-            if (data) {
-              console.log("[v0] Cloud purchases fetched:", data.length)
-              const remotePurchases: Purchase[] = data.map((p) => ({
-                id: p.id || Date.now().toString(),
-                date: p.date,
-                btcAmount: Number(p.amount_btc),
-                usdPriceAtPurchase: Number(p.price_usd),
-                totalUsdSpent: Number(p.amount_btc) * Number(p.price_usd),
-              }))
+          if (data && data.length > 0) {
+            console.log("[v0] Cloud purchases fetched:", data.length)
+            const remotePurchases: Purchase[] = data.map((p) => ({
+              id: p.id || Date.now().toString(),
+              date: p.date,
+              btcAmount: Number(p.amount_btc),
+              usdPriceAtPurchase: Number(p.price_usd),
+              totalUsdSpent: Number(p.amount_btc) * Number(p.price_usd),
+            }))
 
-              setPurchases(remotePurchases)
-            }
+            setPurchases(remotePurchases)
+            storage.enableCloudSync()
+          } else if (localPurchases.length > 0 && !storage.isCloudSyncEnabled()) {
+            // For now, we just respect the cloud state. If cloud is empty, we keep local.
+            // But we should probably enable sync so future adds go to cloud.
+            storage.enableCloudSync()
           }
-        } catch (error) {
-          console.error("[v0] Failed to sync with cloud:", error)
         }
+      } catch (error) {
+        console.error("[v0] Failed to sync with cloud:", error)
       }
 
       setIsLoaded(true)

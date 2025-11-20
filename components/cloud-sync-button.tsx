@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Cloud, CloudOff, Loader2 } from 'lucide-react'
+import { Cloud, CloudOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -11,14 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createSupabaseClient } from "@/lib/supabase/client"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import type { Purchase } from "@/lib/types"
 
 interface CloudSyncButtonProps {
@@ -42,26 +37,28 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
   useEffect(() => {
     if (!mounted) return
-    
+
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         checkAuthStatus()
       }
     }
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [mounted])
 
   useEffect(() => {
     if (!mounted) return
-    
+
     const supabase = createSupabaseClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[v0] Auth state changed:", event, !!session)
       setIsLoggedIn(!!session)
     })
-    
+
     return () => subscription.unsubscribe()
   }, [mounted])
 
@@ -73,6 +70,16 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
       } = await supabase.auth.getSession()
       console.log("[v0] Current session status:", !!session)
       setIsLoggedIn(!!session)
+
+      if (session?.user) {
+        const { count, error } = await supabase.from("purchases").select("*", { count: "exact", head: true })
+
+        if (!error && count !== null && count > 0) {
+          console.log("[v0] User has existing data, enabling sync status")
+          localStorage.setItem("oryn-cloud-sync-enabled", "true")
+          setIsSynced(true)
+        }
+      }
     } catch (error) {
       console.error("Failed to check auth status:", error)
       setIsLoggedIn(false)
@@ -122,7 +129,7 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
       // Delete existing purchases for this user
       const { error: deleteError } = await supabase.from("purchases").delete().eq("user_id", user.id)
-      
+
       if (deleteError) {
         console.error("[v0] Delete error:", deleteError)
         throw deleteError
@@ -217,8 +224,8 @@ export function CloudSyncButton({ purchases, onSyncComplete }: CloudSyncButtonPr
 
               <div className="bg-muted p-4 rounded-lg border border-border">
                 <p className="text-xs text-muted-foreground">
-                  <strong>توجه:</strong> اگر نمی‌خواهید داده‌های خود را در ابر ذخیره کنید، می‌توانید از دکمه‌های «وارد
-                  کردن» و «خروجی CSV/JSON» برای ذخیره‌سازی محلی داده‌ها استفاده کنید.
+                  <strong>توجه:</strong> اگر نمی‌خواهید داده‌های خود را در ابر ذخیره کنید، می‌توانید از دکمه‌های «وارد کردن»
+                  و «خروجی CSV/JSON» برای ذخیره‌سازی محلی داده‌ها استفاده کنید.
                 </p>
               </div>
             </DialogDescription>
