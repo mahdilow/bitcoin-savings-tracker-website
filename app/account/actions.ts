@@ -52,6 +52,14 @@ export async function terminateAllSessions() {
 
   const adminAuthClient = createAdminClient()
 
+  // Check if there are other sessions to terminate
+  // We only want to allow this if there are actually multiple sessions
+  // However, this check is mostly for UI feedback or pre-validation
+  const sessionCount = await getSessionCount()
+  if (sessionCount <= 1) {
+    throw new Error("No other sessions to terminate")
+  }
+
   // Sign out the user from all devices by invalidating all refresh tokens
   const { error } = await adminAuthClient.auth.admin.signOut(user.id)
 
@@ -64,4 +72,18 @@ export async function terminateAllSessions() {
   revalidatePath("/account")
 
   return { success: true }
+}
+
+export async function getSessionCount() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc("get_active_session_count")
+
+  if (error) {
+    console.error("Error fetching session count:", error)
+    // Fallback to 1 if we can't count (assume current session exists)
+    return 1
+  }
+
+  return data as number
 }
