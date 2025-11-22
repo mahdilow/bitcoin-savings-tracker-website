@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Home, TrendingUp, ShoppingCart, BarChart3, Trophy, Settings, Newspaper } from 'lucide-react'
+import { Home, TrendingUp, ShoppingCart, BarChart3, Trophy, Newspaper, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { useRouter, usePathname } from "next/navigation"
 
 interface SidebarProps {
   className?: string
@@ -46,11 +47,34 @@ const menuItems = [
     icon: Trophy,
     description: "Achievements",
   },
+  {
+    id: "account",
+    label: "حساب من",
+    icon: User,
+    description: "My Account",
+  },
 ]
 
 export function Sidebar({ className }: SidebarProps) {
   const [activeItem, setActiveItem] = useState<string>("dashboard")
   const [isHovered, setIsHovered] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleNavigation = (id: string) => {
+    setActiveItem(id)
+
+    if (id === "account") {
+      router.push("/account")
+      return
+    }
+
+    if (pathname !== "/") {
+      router.push(`/?section=${id}`)
+    } else {
+      window.dispatchEvent(new CustomEvent("navigate", { detail: id === "dashboard" ? "home" : id }))
+    }
+  }
 
   return (
     <>
@@ -68,10 +92,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
       >
         <button
-          onClick={() => {
-            setActiveItem("dashboard")
-            window.dispatchEvent(new CustomEvent("navigate", { detail: "home" }))
-          }}
+          onClick={() => handleNavigation("dashboard")}
           className={cn(
             "p-6 border-b border-border min-h-[100px] flex items-center justify-center transition-all duration-200",
             "hover:bg-primary/5 active:bg-primary/10",
@@ -90,10 +111,7 @@ export function Sidebar({ className }: SidebarProps) {
                 alt="Oryn"
                 width={isHovered ? 140 : 48}
                 height={isHovered ? 70 : 48}
-                className={cn(
-                  "transition-all duration-300 object-contain",
-                  isHovered ? "md:w-[140px]" : "md:w-[48px]",
-                )}
+                className={cn("transition-all duration-300 object-contain", isHovered ? "md:w-[140px]" : "md:w-[48px]")}
                 priority
               />
             </div>
@@ -108,10 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveItem(item.id)
-                  window.dispatchEvent(new CustomEvent("navigate", { detail: item.id }))
-                }}
+                onClick={() => handleNavigation(item.id)}
                 className={cn(
                   "w-full flex items-center gap-4 rounded-xl transition-all duration-150 ease-out relative group",
                   isHovered ? "px-4 py-3.5 gap-4" : "md:px-2 md:py-3.5 px-4 py-3.5",
@@ -126,7 +141,7 @@ export function Sidebar({ className }: SidebarProps) {
                     "w-[22px] h-[22px] transition-all duration-150 ease-out flex-shrink-0",
                     "group-hover:scale-110",
                     isActive && "text-primary drop-shadow-[0_0_4px_rgba(247,147,26,0.3)]",
-                    !isHovered && "mx-auto"
+                    !isHovered && "mx-auto",
                   )}
                 />
                 <div
