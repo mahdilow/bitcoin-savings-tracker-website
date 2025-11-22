@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Calendar, Smartphone, Mail, Shield, Clock } from "lucide-react"
+import { User, Calendar, Mail, Shield, Clock, TriangleAlert } from "lucide-react"
 import { LogoutButton } from "@/components/logout-button"
 import { format } from "date-fns-jalali"
+import { DeleteAccountDialog } from "@/components/delete-account-dialog"
+import { SessionManager } from "@/components/session-manager"
 
 export default async function AccountPage() {
   const supabase = await createClient()
@@ -73,22 +75,37 @@ export default async function AccountPage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Shield className="w-5 h-5 text-green-500" />
-              اطلاعات امنیتی و نشست
+              مدیریت نشست‌ها و امنیت
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <SessionManager />
+
+            <div className="border-t border-border/50 pt-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                برای خروج فقط از این دستگاه، از دکمه زیر استفاده کنید:
+              </p>
+              <LogoutButton />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-red-200 dark:border-red-900/50 shadow-md bg-red-50/30 dark:bg-red-900/10">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-red-600 dark:text-red-400">
+              <TriangleAlert className="w-5 h-5" />
+              منطقه خطر
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 hover:bg-muted/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-muted-foreground" />
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium">دستگاه فعلی</p>
-                  <p className="text-xs text-muted-foreground">شما در حال حاضر با این دستگاه وارد شده‌اید</p>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-red-200 dark:border-red-900/30 bg-background/50">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">حذف حساب کاربری و داده‌ها</p>
+                <p className="text-xs text-muted-foreground">تمام اطلاعات شما شامل خریدها و تنظیمات پاک خواهد شد.</p>
               </div>
-              <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+              <DeleteAccountDialog />
             </div>
-
-            <LogoutButton />
           </CardContent>
         </Card>
       </div>

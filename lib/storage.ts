@@ -106,3 +106,9 @@ export const storage = {
     }
   },
 }
+
+export const exportData = (): string => {
+  if (typeof window === "undefined") return "[]"
+  const data = localStorage.getItem(STORAGE_KEY)
+  return data || "[]"
+}
