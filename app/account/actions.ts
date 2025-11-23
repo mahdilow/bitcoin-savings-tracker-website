@@ -41,37 +41,43 @@ export async function deleteAccount() {
 }
 
 export async function terminateAllSessions() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("Unauthorized")
+    if (!user) {
+      throw new Error("Unauthorized")
+    }
+
+    const adminAuthClient = createAdminClient()
+
+    // Check if there are other sessions to terminate
+    const sessionCount = await getSessionCount()
+    if (sessionCount <= 1) {
+      // If only 1 session (current), strictly speaking we are just logging out.
+      // But the UI usually disables the button if count <= 1.
+      // If we are here, maybe the count was stale.
+      // We'll proceed with signOut anyway as it achieves the goal (terminating sessions for this user).
+    }
+
+    // Sign out the user from all devices by invalidating all refresh tokens
+    const { error } = await adminAuthClient.auth.admin.signOut(user.id)
+
+    if (error) {
+      console.error("Supabase Admin SignOut Error:", error)
+      throw new Error(`Failed to terminate sessions: ${error.message}`)
+    }
+
+    // Revalidate to reflect changes (though user will be signed out eventually)
+    revalidatePath("/account")
+
+    return { success: true }
+  } catch (error: any) {
+    console.error("Unexpected error in terminateAllSessions:", error)
+    throw new Error(error.message || "Failed to terminate sessions")
   }
-
-  const adminAuthClient = createAdminClient()
-
-  // Check if there are other sessions to terminate
-  // We only want to allow this if there are actually multiple sessions
-  // However, this check is mostly for UI feedback or pre-validation
-  const sessionCount = await getSessionCount()
-  if (sessionCount <= 1) {
-    throw new Error("No other sessions to terminate")
-  }
-
-  // Sign out the user from all devices by invalidating all refresh tokens
-  const { error } = await adminAuthClient.auth.admin.signOut(user.id)
-
-  if (error) {
-    console.error("Error terminating sessions:", error)
-    throw new Error("Failed to terminate sessions")
-  }
-
-  // Revalidate to reflect changes (though user will be signed out eventually)
-  revalidatePath("/account")
-
-  return { success: true }
 }
 
 export async function getSessionCount() {

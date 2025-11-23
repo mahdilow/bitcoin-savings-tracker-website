@@ -86,11 +86,13 @@ export default async function AccountPage() {
               <SessionManager initialSessionCount={sessionCount} />
 
               <div className="bg-muted/30 rounded-xl p-6 border border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="space-y-1 text-center sm:text-right">
+                <div className="space-y-1 text-center sm:text-right w-full sm:w-auto">
                   <p className="font-medium">خروج از حساب کاربری</p>
                   <p className="text-sm text-muted-foreground">فقط از همین دستگاه خارج می‌شوید</p>
                 </div>
-                <LogoutButton />
+                <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+                  <LogoutButton />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -105,14 +107,16 @@ export default async function AccountPage() {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-5 rounded-xl border border-red-200 dark:border-red-900/30 bg-background/80">
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 text-center md:text-right w-full md:w-auto">
                   <p className="font-bold text-foreground">حذف حساب کاربری و داده‌ها</p>
-                  <p className="text-sm text-muted-foreground max-w-md">
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto md:mx-0">
                     با حذف حساب کاربری، تمام اطلاعات شما شامل تاریخچه خریدها، تنظیمات و اطلاعات شخصی به صورت غیرقابل
                     بازگشت حذف خواهند شد.
                   </p>
                 </div>
-                <DeleteAccountDialog />
+                <div className="w-full md:w-auto flex justify-center md:justify-end">
+                  <DeleteAccountDialog />
+                </div>
               </div>
             </CardContent>
           </Card>

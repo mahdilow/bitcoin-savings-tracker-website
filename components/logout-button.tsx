@@ -34,7 +34,7 @@ export function LogoutButton() {
   }
 
   return (
-    <Button variant="destructive" className="w-full gap-2 mt-4" onClick={handleLogout} disabled={isLoading}>
+    <Button variant="destructive" className="w-full sm:w-auto gap-2" onClick={handleLogout} disabled={isLoading}>
       <LogOut className="w-4 h-4" />
       {isLoading ? "در حال خروج..." : "خروج از حساب کاربری"}
     </Button>
