@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Trash2, AlertTriangle, Download } from "lucide-react"
 import { deleteAccount } from "@/app/account/actions"
 import { useRouter } from "next/navigation"
-import { exportData } from "@/lib/storage"
+import { exportData, storage } from "@/lib/storage"
 
 export function DeleteAccountDialog() {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,9 +25,12 @@ export function DeleteAccountDialog() {
     try {
       setIsDeleting(true)
       await deleteAccount()
+
+      storage.clearPurchases()
+      storage.disableCloudSync()
+
       setIsOpen(false)
-      router.push("/")
-      router.refresh()
+      window.location.href = "/"
     } catch (error) {
       console.error("Failed to delete account:", error)
       alert("خطا در حذف حساب کاربری. لطفاً با پشتیبانی تماس بگیرید.")

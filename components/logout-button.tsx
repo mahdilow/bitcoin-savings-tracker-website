@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
+import { storage } from "@/lib/storage"
 
 export function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false)
@@ -14,9 +15,12 @@ export function LogoutButton() {
   const handleLogout = async () => {
     setIsLoading(true)
     try {
+      storage.clearPurchases()
+      storage.disableCloudSync()
+
       await supabase.auth.signOut()
       router.refresh()
-      router.push("/auth/login")
+      window.location.href = "/auth/login"
     } catch (error) {
       console.error("Error logging out:", error)
     } finally {
