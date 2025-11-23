@@ -15,6 +15,7 @@ import { Trash2, AlertTriangle, Download } from "lucide-react"
 import { deleteAccount } from "@/app/account/actions"
 import { useRouter } from "next/navigation"
 import { exportData, storage } from "@/lib/storage"
+import { createSupabaseClient } from "@/lib/supabase/client"
 
 export function DeleteAccountDialog() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,12 +25,20 @@ export function DeleteAccountDialog() {
   const handleDelete = async () => {
     try {
       setIsDeleting(true)
+
+      // 1. Delete user from server (database + auth)
       await deleteAccount()
 
+      // 2. Sign out from client to clear cookies/tokens immediately
+      const supabase = createSupabaseClient()
+      await supabase.auth.signOut()
+
+      // 3. Clear local storage
       storage.clearPurchases()
       storage.disableCloudSync()
 
       setIsOpen(false)
+      // 4. Force reload to clear any in-memory state
       window.location.href = "/"
     } catch (error) {
       console.error("Failed to delete account:", error)
