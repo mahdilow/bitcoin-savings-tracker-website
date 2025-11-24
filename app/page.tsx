@@ -83,11 +83,31 @@ export default function DashboardPage() {
             }))
 
             setPurchases(remotePurchases)
+            storage.savePurchases(remotePurchases) // Update local storage with cloud data to ensure consistency
             storage.enableCloudSync()
-          } else if (localPurchases.length > 0 && !storage.isCloudSyncEnabled()) {
-            // For now, we just respect the cloud state. If cloud is empty, we keep local.
-            // But we should probably enable sync so future adds go to cloud.
-            storage.enableCloudSync()
+            setIsSyncing(false) // Ensure syncing state is cleared
+          } else {
+            if (localPurchases.length > 0) {
+              // If we have local data, assume the user wants to sync it UP to the new/empty account.
+              // This fixes the issue where it says "Synced" but cloud is actually empty.
+              console.log("[v0] Cloud empty but local data exists. Syncing up...")
+              setIsSyncing(true)
+              try {
+                // We perform the sync immediately so the database matches the UI state
+                await storage.syncPurchasesToSupabase(localPurchases)
+                storage.enableCloudSync()
+                console.log("[v0] Local data synced to cloud successfully")
+              } catch (syncError) {
+                console.error("[v0] Failed to upload local data to empty cloud account:", syncError)
+                // If sync fails, we probably shouldn't claim it's synced, but we leave the local data visible.
+                // We do NOT enable cloud sync flag if the actual sync failed.
+              } finally {
+                setIsSyncing(false)
+              }
+            } else {
+              // Both empty. Just enable sync for future adds.
+              storage.enableCloudSync()
+            }
           }
         }
       } catch (error) {
