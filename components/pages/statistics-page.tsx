@@ -73,53 +73,34 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
     const fetchMarketData = async () => {
       try {
         setIsLoading(true)
-        const cacheKey = "btc_market_data"
-        const cached = apiCache.get<BitcoinMarketData>(cacheKey)
 
-        if (cached) {
-          setMarketData(cached)
-          setIsLoading(false)
-          return
+        const response = await fetch("/api/bitcoin-data")
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch market data")
         }
 
-        const response = await fetch(
-          "https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false",
-        )
         const data = await response.json()
 
-        const circulatingSupply = data.market_data.circulating_supply
-        const maxSupply = 21000000 // Bitcoin's max supply
-        // CoinGecko often returns July 2013 data (~$67) as ATL. If users want "all time", this is the tracking start.
-        // However, to respect the user request, we verify the date.
-        let atl = data.market_data.atl.usd
-        let atlDateStr = data.market_data.atl_date.usd
-
-        // Fallback to hardcoded "known" ATL if API returns > $100 (which is definitely wrong for ALL TIME low)
-        if (atl > 100) {
-          atl = 67.81
-          atlDateStr = "2013-07-06T00:00:00.000Z"
-        }
-
-        const atlDate = new Date(atlDateStr)
-        const athDate = new Date(data.market_data.ath_date.usd)
+        const atlDate = new Date(data.atl_date)
+        const athDate = new Date(data.ath_date)
 
         const marketDataResult = {
-          price: data.market_data.current_price.usd,
-          marketCap: data.market_data.market_cap.usd,
-          volume24h: data.market_data.total_volume.usd,
-          priceChange24h: data.market_data.price_change_percentage_24h,
-          priceChange7d: data.market_data.price_change_percentage_7d,
-          priceChange30d: data.market_data.price_change_percentage_30d,
-          circulatingSupply: data.market_data.circulating_supply,
-          totalSupply: data.market_data.total_supply,
-          ath: data.market_data.ath.usd,
-          atl: atl,
+          price: data.price_usd,
+          marketCap: data.market_cap,
+          volume24h: data.volume_24h,
+          priceChange24h: data.price_change_24h,
+          priceChange7d: data.price_change_7d,
+          priceChange30d: data.price_change_30d,
+          circulatingSupply: data.circulating_supply,
+          totalSupply: data.total_supply,
+          ath: data.ath,
+          atl: data.atl,
           athDate: toJalali(athDate.toISOString()),
           atlDate: toJalali(atlDate.toISOString()),
-          dominance: data.market_data.market_cap_change_percentage_24h, // Corrected to market_cap_change_percentage_24h for dominance
+          dominance: data.dominance,
         }
 
-        apiCache.set(cacheKey, marketDataResult, CACHE_DURATIONS.MARKET_DATA)
         setMarketData(marketDataResult)
       } catch (error) {
         console.error("Failed to fetch market data:", error)
@@ -399,7 +380,7 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       activeDot={{
                         r: 6,
                         fill: "#F7931A",
-                        stroke: "var(--background)",
+                        stroke: chartColors.text === "#ffffff" ? "#0a0a0a" : "#fafafa",
                         strokeWidth: 2,
                       }}
                     />
@@ -558,6 +539,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
+                      cursor={{
+                        fill: chartColors.text === "#ffffff" ? "rgba(42, 42, 42, 0.1)" : "rgba(245, 245, 245, 0.1)",
+                        opacity: 0.1,
+                      }}
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null
                         return (
@@ -892,6 +877,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       }}
                     />
                     <Tooltip
+                      cursor={{
+                        fill: chartColors.text === "#ffffff" ? "rgba(42, 42, 42, 0.1)" : "rgba(245, 245, 245, 0.1)",
+                        opacity: 0.1,
+                      }}
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null
                         const data = payload[0].payload
@@ -1137,7 +1126,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip
-                      cursor={{ fill: "hsl(var(--muted))", opacity: 0.1 }}
+                      cursor={{
+                        fill: chartColors.text === "#ffffff" ? "rgba(42, 42, 42, 0.1)" : "rgba(245, 245, 245, 0.1)",
+                        opacity: 0.1,
+                      }}
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null
                         const data = payload[0].payload
@@ -1245,7 +1237,10 @@ export function StatisticsPage({ purchases, currentBTCPrice, currentBTCPriceIRT 
                       tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
-                      cursor={{ fill: "hsl(var(--muted))", opacity: 0.1 }}
+                      cursor={{
+                        fill: chartColors.text === "#ffffff" ? "rgba(42, 42, 42, 0.1)" : "rgba(245, 245, 245, 0.1)",
+                        opacity: 0.1,
+                      }}
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null
                         const data = payload[0].payload
@@ -1353,15 +1348,37 @@ function calculateUserStatistics(purchases: Purchase[], currentBTCPrice: number,
     portfolioValue: number
     btcPrice: number
   }> = []
+
+  // Add data points for each purchase
   sortedPurchases.forEach((purchase, index) => {
-    const purchaseDate = new Date(purchase.date)
     const cumulativeBTC = sortedPurchases.slice(0, index + 1).reduce((sum, p) => sum + p.btcAmount, 0)
     portfolioVsBTC.push({
       date: toJalali(purchase.date),
-      portfolioValue: cumulativeBTC * currentBTCPrice,
+      portfolioValue: cumulativeBTC * purchase.usdPriceAtPurchase,
       btcPrice: purchase.usdPriceAtPurchase,
     })
   })
+
+  const lastPurchaseDate =
+    sortedPurchases.length > 0 ? new Date(sortedPurchases[sortedPurchases.length - 1].date) : today
+
+  // Only add today's point if it's different from the last purchase date
+  if (today.toDateString() !== lastPurchaseDate.toDateString()) {
+    portfolioVsBTC.push({
+      date: toJalali(today.toISOString().split("T")[0]),
+      portfolioValue: totalBTC * currentBTCPrice,
+      btcPrice: currentBTCPrice,
+    })
+  } else {
+    // Update the last point with current prices if it's today
+    if (portfolioVsBTC.length > 0) {
+      portfolioVsBTC[portfolioVsBTC.length - 1] = {
+        ...portfolioVsBTC[portfolioVsBTC.length - 1],
+        portfolioValue: totalBTC * currentBTCPrice,
+        btcPrice: currentBTCPrice,
+      }
+    }
+  }
 
   // Correlation score (simplified - comparing portfolio growth vs BTC price trend)
   const portfolioGrowth = portfolioVsBTC.map((d) => d.portfolioValue)

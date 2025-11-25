@@ -119,7 +119,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-vazirmatn), "Vazirmatn", sans-serif;
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
   --color-background: rgb(var(--background));
   --color-foreground: rgb(var(--foreground));
   --color-card: rgb(var(--card));

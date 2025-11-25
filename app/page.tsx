@@ -133,20 +133,28 @@ export default function DashboardPage() {
           method: "POST",
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
         const data = await response.json()
 
-        if (data && data.stats && data.stats["btc-rls"] && data.stats["btc-rls"].latest) {
-          setCurrentBTCPriceIRT(Number.parseFloat(data.stats["btc-rls"].latest) / 10)
-        } else {
-          console.warn("[v0] Invalid Nobitex API response structure:", data)
-          // Keep previous price if update fails
+        if (data?.stats?.["btc-rls"]?.latest) {
+          const price = Number.parseFloat(data.stats["btc-rls"].latest) / 10
+          if (price > 0) {
+            setCurrentBTCPriceIRT(price)
+            return
+          }
+        }
+
+        if (data?.fallbackRate && currentBTCPrice > 0) {
+          const estimatedIrtPrice = currentBTCPrice * data.fallbackRate
+          setCurrentBTCPriceIRT(estimatedIrtPrice)
+          console.warn("[v0] Using fallback exchange rate for IRT price")
+          return
+        }
+
+        if (data?.error) {
+          console.warn("[v0] IRT price warning:", data.error)
         }
       } catch (error) {
-        console.error("[v0] Failed to fetch IRT price:", error)
+        console.warn("[v0] Failed to fetch IRT price:", error)
         // Continue with previous price, don't break the app
       }
     }
@@ -155,7 +163,7 @@ export default function DashboardPage() {
     const interval = setInterval(fetchIrtPrice, 60000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [currentBTCPrice]) // Added currentBTCPrice dependency for fallback calculation
 
   const handlePriceUpdate = useCallback((price: number) => {
     setCurrentBTCPrice(price)

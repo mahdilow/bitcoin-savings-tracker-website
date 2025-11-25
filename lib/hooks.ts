@@ -1,36 +1,36 @@
-"use client";
+"use client"
 
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 export function useChartColors() {
-  const { theme } = useTheme();
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [chartColors, setChartColors] = useState({
-    value: "hsl(var(--primary))",
-    invested: "hsl(var(--success))",
+    value: "#F7931A",
+    invested: "#10B981",
     grid: "#cccccc",
-    text: theme === 'dark' ? '#ffffff' : 'hsl(var(--foreground))',
-    positive: "hsl(var(--primary))",
-    negative: "hsl(var(--destructive))",
-  });
+    text: theme === "dark" ? "#ffffff" : "#000000",
+    positive: "#F7931A",
+    negative: "#EF4444",
+  })
 
   useEffect(() => {
-    // This effect ensures that we get the colors after the theme has been applied.
-    // It's a bit of a workaround for the fact that CSS variables are not immediately available.
-    const timeoutId = setTimeout(() => {
-      const style = getComputedStyle(document.documentElement);
-      setChartColors({
-        value: `hsl(${style.getPropertyValue("--primary").trim()})`,
-        invested: `hsl(${style.getPropertyValue("--success").trim()})`,
-        grid: "#cccccc",
-        text: theme === 'dark' ? '#ffffff' : `hsl(${style.getPropertyValue("--foreground").trim()})`,
-        positive: `hsl(${style.getPropertyValue("--primary").trim()})`,
-        negative: `hsl(${style.getPropertyValue("--destructive").trim()})`,
-      });
-    }, 1); // 1ms delay is enough to wait for the next paint
+    setMounted(true)
+  }, [])
 
-    return () => clearTimeout(timeoutId);
-  }, [theme]);
+  useEffect(() => {
+    if (!mounted) return
 
-  return chartColors;
+    setChartColors({
+      value: "#F7931A", // Orange for Bitcoin
+      invested: "#10B981", // Green for success/profit
+      grid: theme === "dark" ? "#333333" : "#e5e7eb",
+      text: theme === "dark" ? "#ffffff" : "#0a0a0a",
+      positive: "#F7931A", // Orange
+      negative: "#EF4444", // Red
+    })
+  }, [theme, mounted])
+
+  return chartColors
 }

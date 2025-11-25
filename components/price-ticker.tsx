@@ -33,78 +33,21 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
           return
         }
 
-        try {
-          const response = await fetch(
-            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true",
-          )
+        const response = await fetch("/api/bitcoin-data")
 
-          if (!response.ok) {
-            throw new Error(`CoinGecko API returned status ${response.status}`)
-          }
-
-          const data = await response.json()
-
-          if (!data.bitcoin || typeof data.bitcoin.usd === "undefined") {
-            throw new Error("Invalid CoinGecko API response structure")
-          }
-
-          const newPrice = {
-            usd: data.bitcoin.usd,
-            usd_24h_change: data.bitcoin.usd_24h_change || 0,
-          }
-
-          apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
-          updatePrice(newPrice)
-          return
-        } catch (coingeckoError) {
-          console.warn("[v0] CoinGecko API failed, trying fallback (Binance):", coingeckoError)
-
-          // Fallback 1: Binance API
-          try {
-            const response = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT")
-
-            if (!response.ok) {
-              throw new Error(`Binance API returned status ${response.status}`)
-            }
-
-            const data = await response.json()
-
-            const newPrice = {
-              usd: Number.parseFloat(data.lastPrice),
-              usd_24h_change: Number.parseFloat(data.priceChangePercent),
-            }
-
-            apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
-            updatePrice(newPrice)
-            return
-          } catch (binanceError) {
-            console.warn("[v0] Binance API failed, trying fallback (CoinCap):", binanceError)
-
-            // Fallback 2: CoinCap API
-            try {
-              const response = await fetch("https://api.coincap.io/v2/assets/bitcoin")
-
-              if (!response.ok) {
-                throw new Error(`CoinCap API returned status ${response.status}`)
-              }
-
-              const data = await response.json()
-              const asset = data.data
-
-              const newPrice = {
-                usd: Number.parseFloat(asset.priceUsd),
-                usd_24h_change: Number.parseFloat(asset.changePercent24Hr),
-              }
-
-              apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
-              updatePrice(newPrice)
-              return
-            } catch (coincapError) {
-              console.warn("[v0] CoinCap API failed:", coincapError)
-              throw coingeckoError // Throw original error to trigger expired cache fallback
-            }
-          }
+        if (!response.ok) {
+          throw new Error(`API returned status ${response.status}`)
         }
+
+        const data = await response.json()
+
+        const newPrice = {
+          usd: data.price_usd,
+          usd_24h_change: data.price_change_24h || 0,
+        }
+
+        apiCache.set(cacheKey, newPrice, CACHE_DURATIONS.PRICE_TICKER)
+        updatePrice(newPrice)
       } catch (error) {
         console.warn("[v0] All Bitcoin price APIs failed:", error)
 
@@ -133,7 +76,7 @@ export function PriceTicker({ onPriceUpdate, currentBTCPriceIRT }: PriceTickerPr
     const startFetching = () => {
       fetchPrice()
       if (interval) clearInterval(interval)
-      interval = setInterval(fetchPrice, 60000)
+      interval = setInterval(fetchPrice, 5 * 60 * 1000)
     }
 
     const stopFetching = () => {
