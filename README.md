@@ -29,25 +29,25 @@ A web application to help users track their Bitcoin savings and investments.
 
 1.  **Clone the repository:**
 
-    ```bash
+    \`\`\`bash
     git clone https://github.com/mahdico/bitcoin-savings-tracker.git
     cd bitcoin-savings-tracker
-    ```
+    \`\`\`
 
 2.  **Install dependencies:**
 
-    ```bash
+    \`\`\`bash
     pnpm install
-    ```
+    \`\`\`
 
 3.  **Set up environment variables:**
     Create a file named `.env.local` in the root of the project and add the following variables. You can get these from your Supabase project dashboard.
 
-    ```env
+    \`\`\`env
     NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
     SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-    ```
+    \`\`\`
 
 4.  **Set up the database:**
     Log in to your Supabase account and run the SQL scripts located in the `/scripts` directory in the Supabase SQL Editor to set up the necessary tables and policies.
@@ -56,9 +56,9 @@ A web application to help users track their Bitcoin savings and investments.
 
 Run the development server:
 
-```bash
+\`\`\`bash
 pnpm dev
-```
+\`\`\`
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
