@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Home, TrendingUp, ShoppingCart, BarChart3, Trophy, Newspaper, User } from "lucide-react"
+import { Home, TrendingUp, ShoppingCart, BarChart3, Trophy, Newspaper, User, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
@@ -28,6 +28,12 @@ const menuItems = [
     label: "میانگین هزینه دلاری",
     icon: TrendingUp,
     description: "DCA Strategy",
+  },
+  {
+    id: "goals",
+    label: "اهداف و تحقیقات",
+    icon: Target,
+    description: "Goals & Research",
   },
   {
     id: "statistics",

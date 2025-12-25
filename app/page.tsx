@@ -11,6 +11,8 @@ import { PurchaseHistory } from "@/components/purchase-history"
 import { PortfolioChart } from "@/components/portfolio-chart"
 import { EmptyState } from "@/components/empty-state"
 import { StatisticsPage } from "@/components/pages/statistics-page"
+import { DCAPage } from "@/components/pages/dca-page"
+import { GoalsPage } from "@/components/pages/goals-page"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { CloudSyncButton } from "@/components/cloud-sync-button"
 import { createSupabaseClient } from "@/lib/supabase/client"
@@ -43,7 +45,8 @@ export default function DashboardPage() {
         page === "statistics" ||
         page === "news" ||
         page === "achievements" ||
-        page === "settings"
+        page === "settings" ||
+        page === "goals"
       ) {
         setActivePage(page)
       }
@@ -296,6 +299,24 @@ export default function DashboardPage() {
               currentBTCPrice={currentBTCPrice}
               currentBTCPriceIRT={currentBTCPriceIRT}
             />
+          </>
+        ) : activePage === "dca" ? (
+          <>
+            <div className="text-center mb-8 animate-fade-in pt-4 md:pt-0">
+              <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-2">میانگین هزینه دلاری</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
+                استراتژی سرمایه‌گذاری تدریجی و محاسبه بازدهی شما
+              </p>
+            </div>
+            <DCAPage currentBTCPrice={currentBTCPrice} />
+          </>
+        ) : activePage === "goals" ? (
+          <>
+            <div className="text-center mb-8 animate-fade-in pt-4 md:pt-0">
+              <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-2">اهداف و تحقیقات</h1>
+              <p className="text-sm md:text-base text-muted-foreground">اهداف مالی خود را تعریف و پیگیری کنید</p>
+            </div>
+            <GoalsPage purchases={purchases} />
           </>
         ) : (
           <div className="text-center py-20">

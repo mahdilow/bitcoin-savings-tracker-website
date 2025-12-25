@@ -2,6 +2,8 @@
 
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
+import { createSupabaseClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 
 export function useChartColors() {
   const { theme } = useTheme()
@@ -33,4 +35,30 @@ export function useChartColors() {
   }, [theme, mounted])
 
   return chartColors
+}
+
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createSupabaseClient()
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription?.unsubscribe()
+  }, [])
+
+  return { user, loading }
 }
