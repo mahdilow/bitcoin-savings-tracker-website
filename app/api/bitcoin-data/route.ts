@@ -70,6 +70,11 @@ async function fetchBitcoinData(): Promise<BitcoinData> {
 
     if (!response.ok) throw new Error("CoinGecko API failed")
 
+    const contentType = response.headers.get("content-type")
+    if (!contentType?.includes("application/json")) {
+      throw new Error("CoinGecko returned non-JSON response")
+    }
+
     const data = await response.json()
     const md = data.market_data
 
@@ -109,6 +114,11 @@ async function fetchBitcoinData(): Promise<BitcoinData> {
       const response = await fetch("https://api.coincap.io/v2/assets/bitcoin")
       if (!response.ok) throw new Error("CoinCap API failed")
 
+      const contentType = response.headers.get("content-type")
+      if (!contentType?.includes("application/json")) {
+        throw new Error("CoinCap returned non-JSON response")
+      }
+
       const json = await response.json()
       const data = json.data
 
@@ -135,6 +145,11 @@ async function fetchBitcoinData(): Promise<BitcoinData> {
       try {
         const response = await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT")
         if (!response.ok) throw new Error("Binance API failed")
+
+        const contentType = response.headers.get("content-type")
+        if (!contentType?.includes("application/json")) {
+          throw new Error("Binance returned non-JSON response")
+        }
 
         const data = await response.json()
 
