@@ -14,10 +14,8 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  const supabase = createServerClient(
-    supabaseUrl, // use the checked variable
-    supabaseAnonKey, // use the checked variable
-    {
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -32,33 +30,35 @@ export async function updateSession(request: NextRequest) {
       },
       cookieOptions: {
         name: "oryn-auth",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
       },
-    },
-  )
+    })
 
-  // Do not run Supabase middleware on static files or assets
-  if (
-    request.nextUrl.pathname.startsWith("/_next") ||
-    request.nextUrl.pathname.includes(".") ||
-    request.nextUrl.pathname.startsWith("/api")
-  ) {
+    // Do not run Supabase middleware on static files or assets
+    if (
+      request.nextUrl.pathname.startsWith("/_next") ||
+      request.nextUrl.pathname.includes(".") ||
+      request.nextUrl.pathname.startsWith("/api")
+    ) {
+      return supabaseResponse
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // Protected routes pattern
+    if (request.nextUrl.pathname.startsWith("/account") && !user) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/login"
+      url.searchParams.set("next", request.nextUrl.pathname)
+      return NextResponse.redirect(url)
+    }
+
+    return supabaseResponse
+  } catch (error) {
+    console.error("[Middleware] Auth check failed:", error instanceof Error ? error.message : "Unknown error")
     return supabaseResponse
   }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Protected routes pattern
-  // Only redirect to login if trying to access /account and not logged in
-  if (request.nextUrl.pathname.startsWith("/account") && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
-    url.searchParams.set("next", request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
-
-  return supabaseResponse
 }
